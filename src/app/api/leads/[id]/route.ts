@@ -1,7 +1,7 @@
 // src/app/api/leads/[id]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentSession, recordAuditLog } from '@/lib/auth/session';
-import { queryOne, execute, transaction } from '@/lib/db/connection';
+import { query, queryOne, execute, transaction } from '@/lib/db/connection';
 import { LeadStatus } from '@/lib/db/types';
 
 export async function GET(
@@ -244,5 +244,92 @@ export async function PATCH(
   } catch (err: any) {
     console.error('Failed to update lead:', err);
     return NextResponse.json({ error: 'Failed to update lead' }, { status: 500 });
+  }
+}
+
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await getCurrentSession();
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { id: leadId } = await params;
+    const lead = await queryOne<any>('SELECT * FROM leads WHERE id = ?', [leadId]);
+    if (!lead) {
+      return NextResponse.json({ error: 'Client record not found' }, { status: 404 });
+    }
+
+    // Role-based authorization
+    if (session.role === 'REPRESENTATIVE') {
+      const rep = await queryOne<any>('SELECT id FROM representatives WHERE user_id = ?', [session.userId]);
+      if (!rep || lead.representative_id !== rep.id) {
+        return NextResponse.json({ error: 'Forbidden: You cannot delete this client record' }, { status: 403 });
+      }
+    } else if (session.role === 'COUNTRY_MANAGER') {
+      const profile = await queryOne<any>('SELECT country_id FROM user_profiles WHERE user_id = ?', [session.userId]);
+      if (!profile?.country_id || lead.country_id !== profile.country_id) {
+        return NextResponse.json({ error: 'Forbidden: You cannot delete this client record' }, { status: 403 });
+      }
+    } else if (!['SUPER_ADMIN', 'ADMIN'].includes(session.role)) {
+      return NextResponse.json({ error: 'Forbidden: Insufficient permissions' }, { status: 403 });
+    }
+
+    // Safeguard: Do not allow deletion if there are active paid projects
+    const paidProject = await queryOne<any>(
+      "SELECT id FROM projects WHERE lead_id = ? AND payment_status IN ('PARTIALLY_PAID', 'PAID')",
+      [leadId]
+    );
+    if (paidProject) {
+      return NextResponse.json(
+        { error: 'Cannot delete client with active paid projects or verified milestones.' },
+        { status: 400 }
+      );
+    }
+
+    // Execute cascading deletion safely in a transaction
+    await transaction(async (tx) => {
+      // 1. Delete message cursors and messages
+      await tx.execute('DELETE FROM message_read_cursors WHERE lead_id = ?', [leadId]);
+      await tx.execute('DELETE FROM messages WHERE lead_id = ?', [leadId]);
+
+      // 2. Delete any unpaid/draft projects linked to this lead
+      const linkedProjects = await tx.query<any>('SELECT id FROM projects WHERE lead_id = ?', [leadId]);
+      for (const p of linkedProjects) {
+        await tx.execute('DELETE FROM commissions WHERE project_id = ?', [p.id]);
+        await tx.execute('DELETE FROM project_members WHERE project_id = ?', [p.id]);
+        await tx.execute('DELETE FROM invoices WHERE project_id = ?', [p.id]);
+        await tx.execute('DELETE FROM projects WHERE id = ?', [p.id]);
+      }
+
+      // 3. Delete proposals linked to this lead
+      await tx.execute('DELETE FROM proposals WHERE lead_id = ?', [leadId]);
+
+      // 4. Detach from clients table if referenced
+      await tx.execute('UPDATE clients SET lead_id = NULL WHERE lead_id = ?', [leadId]);
+
+      // 5. Delete lead
+      await tx.execute('DELETE FROM leads WHERE id = ?', [leadId]);
+    });
+
+    await recordAuditLog({
+      userId: session.userId,
+      action: 'DELETE_LEAD',
+      entity: 'leads',
+      entityId: leadId,
+      metadata: { businessName: lead.business_name, contactPerson: lead.contact_person },
+      ipAddress: req.headers.get('x-forwarded-for') || '127.0.0.1',
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: `Client record "${lead.business_name}" successfully deleted.`,
+    });
+  } catch (err: any) {
+    console.error('Failed to delete lead:', err);
+    return NextResponse.json({ error: 'Failed to delete client record' }, { status: 500 });
   }
 }

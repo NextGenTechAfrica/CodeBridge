@@ -15,12 +15,13 @@ import {
   MessageSquare,
   Plus,
   ShieldCheck,
+  Trash2,
 } from 'lucide-react';
 import { useRep } from './RepContext';
 import ReferralBanner from '@/components/dashboard/representative/ReferralBanner';
 
 export default function RepresentativeOverviewPage() {
-  const { currentUser, currency, setLeadModalOpen, openChat, subscribeLeadCreated } = useRep();
+  const { currentUser, currency, setLeadModalOpen, openChat, subscribeLeadCreated, openDeleteModal } = useRep();
 
   const [leads, setLeads] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -675,6 +676,34 @@ export default function RepresentativeOverviewPage() {
                           >
                             Manage <ArrowRight size={11} />
                           </Link>
+                          <button
+                            onClick={() => openDeleteModal(lead)}
+                            title="Delete this client record"
+                            style={{
+                              padding: '6px 10px',
+                              borderRadius: '8px',
+                              border: '1px solid rgba(239, 68, 68, 0.3)',
+                              backgroundColor: 'rgba(239, 68, 68, 0.08)',
+                              color: '#EF4444',
+                              cursor: 'pointer',
+                              fontSize: '12px',
+                              fontWeight: 600,
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              transition: 'all 0.15s ease',
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = '#EF4444';
+                              e.currentTarget.style.color = '#FFFFFF';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.08)';
+                              e.currentTarget.style.color = '#EF4444';
+                            }}
+                          >
+                            <Trash2 size={13} /> Delete
+                          </button>
                         </div>
                       </td>
                     </tr>

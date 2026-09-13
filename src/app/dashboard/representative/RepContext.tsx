@@ -56,6 +56,13 @@ interface RepContextType {
   chatEntityType: 'LEAD' | 'PROJECT';
   openChat: (id: string, type: 'LEAD' | 'PROJECT') => void;
   closeChat: () => void;
+  // Delete Client
+  deleteModalOpen: boolean;
+  clientToDelete: any;
+  openDeleteModal: (client: any) => void;
+  closeDeleteModal: () => void;
+  confirmDeleteClient: () => Promise<boolean>;
+  handleDeleteLead: (leadId: string) => Promise<{ success: boolean; error?: string }>;
   // Listener for lead created
   subscribeLeadCreated: (callback: () => void) => () => void;
   handleLogout: () => Promise<void>;
@@ -81,6 +88,10 @@ export function RepProvider({ children }: { children: React.ReactNode }) {
   const [chatEntityId, setChatEntityId] = useState<string | null>(null);
   const [chatEntityType, setChatEntityType] = useState<'LEAD' | 'PROJECT'>('LEAD');
 
+  // Delete client modal state
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [clientToDelete, setClientToDelete] = useState<any>(null);
+
   // Lead listeners
   const [leadListeners, setLeadListeners] = useState<Array<() => void>>([]);
 
@@ -100,6 +111,48 @@ export function RepProvider({ children }: { children: React.ReactNode }) {
   const closeChat = useCallback(() => {
     setChatOpen(false);
   }, []);
+
+  const openDeleteModal = useCallback((client: any) => {
+    setClientToDelete(client);
+    setDeleteModalOpen(true);
+  }, []);
+
+  const closeDeleteModal = useCallback(() => {
+    setDeleteModalOpen(false);
+    setClientToDelete(null);
+  }, []);
+
+  const handleDeleteLead = useCallback(async (leadId: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const res = await fetch(`/api/leads/${leadId}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setFeedback(data.message || 'Client record successfully deleted.');
+        leadListeners.forEach((fn) => fn());
+        return { success: true };
+      } else {
+        const errorMsg = data.error || 'Failed to delete client record.';
+        alert(errorMsg);
+        return { success: false, error: errorMsg };
+      }
+    } catch {
+      const errorMsg = 'Network error deleting client record.';
+      alert(errorMsg);
+      return { success: false, error: errorMsg };
+    }
+  }, [setFeedback, leadListeners]);
+
+  const confirmDeleteClient = useCallback(async (): Promise<boolean> => {
+    if (!clientToDelete?.id) return false;
+    const res = await handleDeleteLead(clientToDelete.id);
+    if (res.success) {
+      closeDeleteModal();
+      return true;
+    }
+    return false;
+  }, [clientToDelete, handleDeleteLead, closeDeleteModal]);
 
   const subscribeLeadCreated = useCallback((cb: () => void) => {
     setLeadListeners((prev) => [...prev, cb]);
@@ -314,6 +367,12 @@ export function RepProvider({ children }: { children: React.ReactNode }) {
         chatEntityType,
         openChat,
         closeChat,
+        deleteModalOpen,
+        clientToDelete,
+        openDeleteModal,
+        closeDeleteModal,
+        confirmDeleteClient,
+        handleDeleteLead,
         subscribeLeadCreated,
         handleLogout,
       }}

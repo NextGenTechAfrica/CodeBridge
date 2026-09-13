@@ -17,6 +17,7 @@ import {
   Clock,
 } from 'lucide-react';
 import CodeBridgeLogo from '@/components/common/CodeBridgeLogo';
+import { INDUSTRY_SECTORS } from '@/lib/constants/industries';
 
 interface ClientIntakeFormStandaloneProps {
   initialRefCode?: string;
@@ -52,7 +53,8 @@ export default function ClientIntakeFormStandalone({
 
   const [formData, setFormData] = useState({
     businessName: '',
-    industry: 'Corporate & Commercial',
+    industry: INDUSTRY_SECTORS[0] as string,
+    customIndustryText: '',
     countryCode: 'NG',
     currency: 'NGN',
     contactPerson: '',
@@ -143,6 +145,13 @@ export default function ClientIntakeFormStandalone({
           ? `Custom: ${formData.customServiceText.trim()}`
           : formData.serviceCategory;
 
+      const effectiveIndustry =
+        formData.industry === 'Other / Custom (Specify)' && formData.customIndustryText.trim()
+          ? formData.customIndustryText.trim()
+          : formData.industry === 'Other / Custom (Specify)'
+          ? 'Other / Custom'
+          : formData.industry;
+
       const res = await fetch('/api/request-project', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -152,7 +161,7 @@ export default function ClientIntakeFormStandalone({
           email: formData.email.trim().toLowerCase(),
           phone: formData.phone.trim(),
           countryCode: formData.countryCode,
-          businessType: formData.industry,
+          businessType: effectiveIndustry,
           serviceCategory: effectiveService,
           requirements: formData.requirements.trim(),
           estimatedBudget: formData.estimatedBudget,
@@ -544,9 +553,7 @@ export default function ClientIntakeFormStandalone({
                         >
                           Industry / Sector
                         </label>
-                        <input
-                          type="text"
-                          placeholder="e.g. Retail, FinTech, Healthcare"
+                        <select
                           value={formData.industry}
                           onChange={(e) => setFormData({ ...formData, industry: e.target.value })}
                           style={{
@@ -558,8 +565,52 @@ export default function ClientIntakeFormStandalone({
                             color: 'var(--cb-text-primary, #FFFFFF)',
                             fontSize: '14px',
                             outline: 'none',
+                            cursor: 'pointer',
                           }}
-                        />
+                        >
+                          {INDUSTRY_SECTORS.map((sector) => (
+                            <option
+                              key={sector}
+                              value={sector}
+                              style={{ backgroundColor: '#0B1528', color: '#F8FAFC' }}
+                            >
+                              {sector}
+                            </option>
+                          ))}
+                        </select>
+
+                        {/* Optional custom specification if "Other / Custom (Specify)" is selected */}
+                        {formData.industry === 'Other / Custom (Specify)' && (
+                          <div style={{ marginTop: '10px' }}>
+                            <label
+                              style={{
+                                display: 'block',
+                                fontSize: '11px',
+                                fontWeight: 700,
+                                marginBottom: '4px',
+                                color: '#38BDF8',
+                              }}
+                            >
+                              Specify Custom Industry / Sector (Optional)
+                            </label>
+                            <input
+                              type="text"
+                              placeholder="e.g. Maritime, CleanTech, Aerospace..."
+                              value={formData.customIndustryText}
+                              onChange={(e) => setFormData({ ...formData, customIndustryText: e.target.value })}
+                              style={{
+                                width: '100%',
+                                padding: '10px 14px',
+                                borderRadius: '8px',
+                                border: '1px solid #0284C7',
+                                backgroundColor: 'var(--cb-bg-surface, rgba(255,255,255,0.03))',
+                                color: 'var(--cb-text-primary, #FFFFFF)',
+                                fontSize: '13px',
+                                outline: 'none',
+                              }}
+                            />
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -848,7 +899,11 @@ export default function ClientIntakeFormStandalone({
                         Review Your Request
                       </div>
                       <div>
-                        <strong>Company:</strong> {formData.businessName} ({formData.industry})
+                        <strong>Company:</strong> {formData.businessName} (
+                        {formData.industry === 'Other / Custom (Specify)' && formData.customIndustryText.trim()
+                          ? formData.customIndustryText.trim()
+                          : formData.industry}
+                        )
                       </div>
                       <div>
                         <strong>Contact:</strong> {formData.contactPerson} &bull; {formData.email}

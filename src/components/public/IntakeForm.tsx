@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Building, User, FileText, Lock, DollarSign, CheckCircle2, ArrowRight, ArrowLeft, AlertCircle } from 'lucide-react';
+import { INDUSTRY_SECTORS } from '@/lib/constants/industries';
 
 export default function IntakeForm({ initialService = 'Business Websites' }: { initialService?: string }) {
   const router = useRouter();
@@ -26,7 +27,8 @@ export default function IntakeForm({ initialService = 'Business Websites' }: { i
 
   const [formData, setFormData] = useState({
     businessName: '',
-    industry: 'Corporate & SME',
+    industry: INDUSTRY_SECTORS[0] as string,
+    customIndustryText: '',
     countryCode: 'NG',
     businessDescription: '',
     
@@ -101,6 +103,13 @@ export default function IntakeForm({ initialService = 'Business Websites' }: { i
     setErrorMsg('');
 
     try {
+      const effectiveIndustry =
+        formData.industry === 'Other / Custom (Specify)' && formData.customIndustryText?.trim()
+          ? formData.customIndustryText.trim()
+          : formData.industry === 'Other / Custom (Specify)'
+          ? 'Other / Custom'
+          : formData.industry;
+
       // Step 1: Auth (Register or Login)
       const authEndpoint = formData.authMode === 'register' ? '/api/auth/register' : '/api/auth/login';
       const authPayload = formData.authMode === 'register' 
@@ -113,7 +122,7 @@ export default function IntakeForm({ initialService = 'Business Websites' }: { i
             countryCode: formData.countryCode,
             accountType: 'CLIENT',
             companyName: formData.businessName,
-            industry: formData.industry,
+            industry: effectiveIndustry,
           }
         : {
             email: formData.email,
@@ -143,7 +152,7 @@ export default function IntakeForm({ initialService = 'Business Websites' }: { i
           email: formData.email,
           phone: formData.phone,
           countryCode: formData.countryCode,
-          businessType: formData.industry,
+          businessType: effectiveIndustry,
           serviceCategory: formData.serviceCategory,
           requirements: formData.requirements,
           estimatedBudget: formData.estimatedBudget,
@@ -254,10 +263,26 @@ export default function IntakeForm({ initialService = 'Business Websites' }: { i
                 <div>
                   <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: 'var(--cb-text-secondary)', marginBottom: '6px' }}>Industry / Sector</label>
                   <select value={formData.industry} onChange={e => setFormData({...formData, industry: e.target.value})} style={inputStyle}>
-                    <option value="Corporate & SME">Corporate & SME</option>
-                    <option value="Retail & Commerce">Retail & Commerce</option>
-                    <option value="Hospitality">Hospitality</option>
+                    {INDUSTRY_SECTORS.map((sector) => (
+                      <option key={sector} value={sector} style={{ backgroundColor: 'var(--cb-bg-card, #0F172A)', color: 'var(--cb-text-primary, #FFFFFF)' }}>
+                        {sector}
+                      </option>
+                    ))}
                   </select>
+                  {formData.industry === 'Other / Custom (Specify)' && (
+                    <div style={{ marginTop: '10px' }}>
+                      <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#0284C7', marginBottom: '4px' }}>
+                        Specify Custom Industry / Sector (Optional)
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Clean Energy, Maritime, Biotechnology..."
+                        value={formData.customIndustryText}
+                        onChange={e => setFormData({ ...formData, customIndustryText: e.target.value })}
+                        style={inputStyle}
+                      />
+                    </div>
+                  )}
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: 'var(--cb-text-secondary)', marginBottom: '6px' }}>Operating Market</label>
@@ -382,7 +407,13 @@ export default function IntakeForm({ initialService = 'Business Websites' }: { i
               <CheckCircle2 size={20} color="#0284C7" /> 5. Review & Submit
             </h3>
             <div style={{ backgroundColor: 'var(--cb-bg-subtle)', borderRadius: '12px', border: '1px solid var(--cb-border-subtle)', padding: '20px', fontSize: '14px', color: 'var(--cb-text-primary)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <div><strong>Business:</strong> {formData.businessName}</div>
+              <div>
+                <strong>Business:</strong> {formData.businessName} (
+                {formData.industry === 'Other / Custom (Specify)' && formData.customIndustryText?.trim()
+                  ? formData.customIndustryText.trim()
+                  : formData.industry}
+                )
+              </div>
               <div><strong>Contact:</strong> {formData.firstName} {formData.lastName} ({formData.email})</div>
               <div><strong>Service:</strong> {formData.serviceCategory}</div>
               <div><strong>Budget:</strong> {formData.currency} {formData.estimatedBudget}</div>

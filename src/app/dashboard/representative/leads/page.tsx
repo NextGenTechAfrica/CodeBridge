@@ -16,6 +16,7 @@ import {
   Briefcase,
   ChevronRight,
   Filter,
+  Trash2,
 } from 'lucide-react';
 import { useRep } from '../RepContext';
 
@@ -40,6 +41,7 @@ export default function RepresentativeLeadsPage() {
     referralLink,
     copyReferralLink,
     copiedReferral,
+    openDeleteModal,
   } = useRep();
 
   const [leads, setLeads] = useState<any[]>([]);
@@ -557,6 +559,35 @@ export default function RepresentativeLeadsPage() {
                               Mark Won
                             </button>
                           )}
+
+                          <button
+                            onClick={() => openDeleteModal(lead)}
+                            title="Delete this client record"
+                            style={{
+                              padding: '6px 10px',
+                              borderRadius: '6px',
+                              border: '1px solid rgba(239, 68, 68, 0.3)',
+                              backgroundColor: 'rgba(239, 68, 68, 0.08)',
+                              color: '#EF4444',
+                              cursor: 'pointer',
+                              fontSize: '11px',
+                              fontWeight: 600,
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              transition: 'all 0.15s ease',
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = '#EF4444';
+                              e.currentTarget.style.color = '#FFFFFF';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.08)';
+                              e.currentTarget.style.color = '#EF4444';
+                            }}
+                          >
+                            <Trash2 size={12} /> Delete
+                          </button>
                         </div>
                       </td>
                     </tr>

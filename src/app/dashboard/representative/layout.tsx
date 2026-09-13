@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { RepProvider, useRep } from './RepContext';
 import AddClientModal from '@/components/dashboard/representative/AddClientModal';
+import DeleteClientModal from '@/components/dashboard/representative/DeleteClientModal';
 import ChatDrawer from '@/components/dashboard/ChatDrawer';
 import CodeBridgeLogo from '@/components/common/CodeBridgeLogo';
 import ThemeToggle from '@/components/common/ThemeToggle';
@@ -603,6 +604,9 @@ function RepresentativeLayoutContent({ children }: { children: React.ReactNode }
 
       {/* Global Unified Add Client Modal */}
       <AddClientModal />
+
+      {/* Global Delete Client Confirmation Modal */}
+      <DeleteClientModal />
 
       {/* Global Live Chat Drawer */}
       {chatOpen && chatEntityId && (
