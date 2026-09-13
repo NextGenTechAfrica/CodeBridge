@@ -1,0 +1,89 @@
+// src/components/dashboard/representative/ReferralBanner.tsx
+'use client';
+
+import React from 'react';
+import { Copy, Check } from 'lucide-react';
+import { useRep } from '@/app/dashboard/representative/RepContext';
+
+export default function ReferralBanner() {
+  const { referralLink, copyReferralLink, copiedReferral } = useRep();
+
+  return (
+    <div
+      style={{
+        backgroundColor: '#FFFFFF',
+        borderRadius: '16px',
+        padding: '18px 24px',
+        border: '1px solid #E2E8F0',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+        marginBottom: '28px',
+        display: 'flex',
+        flexWrap: 'wrap',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: '16px',
+      }}
+    >
+      <div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+          <span
+            style={{
+              backgroundColor: '#EFF6FF',
+              color: '#2563EB',
+              fontSize: '11px',
+              fontWeight: 700,
+              padding: '2px 8px',
+              borderRadius: '6px',
+            }}
+          >
+            REFERRAL LINK
+          </span>
+          <span style={{ fontSize: '13px', fontWeight: 700, color: '#0F172A' }}>
+            Earn 20% Guaranteed Service Commission
+          </span>
+        </div>
+        <p style={{ fontSize: '12px', color: '#64748B', margin: 0 }}>
+          Share your link with prospective business owners. New client leads auto-attribute to your commission ledger.
+        </p>
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <input
+          type="text"
+          readOnly
+          value={referralLink}
+          style={{
+            padding: '8px 14px',
+            borderRadius: '8px',
+            border: '1px solid #E2E8F0',
+            backgroundColor: '#F8FAFC',
+            fontSize: '12px',
+            color: '#0F172A',
+            width: '320px',
+            fontFamily: 'monospace',
+          }}
+        />
+        <button
+          onClick={copyReferralLink}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            backgroundColor: copiedReferral ? '#059669' : '#0F172A',
+            color: '#FFFFFF',
+            border: 'none',
+            borderRadius: '8px',
+            padding: '8px 16px',
+            fontSize: '12px',
+            fontWeight: 600,
+            cursor: 'pointer',
+            transition: 'background-color 0.15s ease',
+          }}
+        >
+          {copiedReferral ? <Check size={14} /> : <Copy size={14} />}
+          {copiedReferral ? 'Copied!' : 'Copy Link'}
+        </button>
+      </div>
+    </div>
+  );
+}

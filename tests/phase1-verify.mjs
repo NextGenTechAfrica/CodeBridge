@@ -67,7 +67,7 @@ async function testPhase1() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        email: 'hackadmin@marketbridge.com',
+        email: 'hackadmin@codebridge.com',
         password: 'Password123!',
         firstName: 'Hacker',
         lastName: 'Attempt',
@@ -125,8 +125,8 @@ async function testPhase1() {
   // 4. Multi-Role Authentication & Target Dashboard Routing
   console.log('\n4. Testing Login for all defined roles (/api/auth/login)...');
   const roleLogins = [
-    { email: 'superadmin@marketbridge.com', role: 'SUPER_ADMIN', expectedRedirect: '/dashboard/super-admin' },
-    { email: 'ops@marketbridge.com', role: 'ADMIN', expectedRedirect: '/dashboard/admin' },
+    { email: 'superadmin@codebridge.com', role: 'SUPER_ADMIN', expectedRedirect: '/dashboard/super-admin' },
+    { email: 'ops@codebridge.com', role: 'ADMIN', expectedRedirect: '/dashboard/admin' },
     { email: 'countrymanager.ke@codebridge.com', role: 'COUNTRY_MANAGER', expectedRedirect: '/dashboard/country-manager' },
     { email: 'dev@codebridge.com', role: 'DEVELOPER', expectedRedirect: '/dashboard/developer' },
     { email: 'client@abcrestaurants.com', role: 'CLIENT', expectedRedirect: '/dashboard/client' },

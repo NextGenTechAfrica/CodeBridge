@@ -140,6 +140,7 @@ export default function ContactPage() {
             }}>
               Whether you are planning custom software architecture, seeking technical scoping, or inquiring about our authorized sales representative partnership, send us a message below.
             </p>
+            <p style={{ color: 'var(--cb-text-secondary)', fontSize: '15px', marginTop: '12px' }}>nextgentechafrica@gmail.com</p>
             </motion.div>
           </div>
         </section>
@@ -439,7 +440,7 @@ export default function ContactPage() {
                 <ShieldCheck size={16} style={{ color: 'var(--cb-cyan-500)' }} />
                 Corporate Entity
               </div>
-              CodeBridge is an enterprise technology delivery platform owned and operated by <strong>MarketBridge NG LTD</strong>.
+              CodeBridge is a technology delivery platform providing digital solutions for businesses and individuals.
             </motion.div>
           </div>
         </section>

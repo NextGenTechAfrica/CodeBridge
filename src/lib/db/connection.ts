@@ -182,6 +182,48 @@ export function getSqliteClient(): DatabaseSync {
         CREATE UNIQUE INDEX IF NOT EXISTS idx_payments_unique_flw_ref ON payments(gateway_reference);
       `);
     }
+
+    // Financial Hardening column additions for SQLite
+    if (!payCols.some((c: any) => c.name === 'client_id')) {
+      sqliteClient.exec(`
+        ALTER TABLE payments ADD COLUMN client_id TEXT;
+        ALTER TABLE payments ADD COLUMN provider_id TEXT;
+        ALTER TABLE payments ADD COLUMN transaction_currency TEXT;
+        ALTER TABLE payments ADD COLUMN amount_transaction_minor INTEGER;
+        ALTER TABLE payments ADD COLUMN settlement_exchange_rate REAL;
+        ALTER TABLE payments ADD COLUMN exchange_rate_source TEXT;
+        ALTER TABLE payments ADD COLUMN amount_refunded_minor INTEGER DEFAULT 0;
+        ALTER TABLE payments ADD COLUMN remaining_refundable_minor INTEGER;
+        ALTER TABLE payments ADD COLUMN payout_status TEXT DEFAULT 'RESERVED';
+      `);
+    }
+
+    const refCols = sqliteClient.prepare('PRAGMA table_info(refunds);').all() as any[];
+    if (!refCols.some((c: any) => c.name === 'requested_amount_minor')) {
+      sqliteClient.exec(`
+        ALTER TABLE refunds ADD COLUMN requested_amount_minor INTEGER;
+        ALTER TABLE refunds ADD COLUMN approved_amount_minor INTEGER DEFAULT 0;
+        ALTER TABLE refunds ADD COLUMN retry_count INTEGER DEFAULT 0;
+        ALTER TABLE refunds ADD COLUMN original_refund_id TEXT;
+        ALTER TABLE refunds ADD COLUMN idempotency_key TEXT;
+        ALTER TABLE refunds ADD COLUMN shortfall_minor INTEGER DEFAULT 0;
+        ALTER TABLE refunds ADD COLUMN operational_block_reason TEXT;
+        ALTER TABLE refunds ADD COLUMN approved_at TEXT;
+        ALTER TABLE refunds ADD COLUMN initiated_at TEXT;
+        ALTER TABLE refunds ADD COLUMN failed_at TEXT;
+      `);
+    }
+
+    if (!repCols.some((c: any) => c.name === 'territory_id')) {
+      sqliteClient.exec(`
+        ALTER TABLE representatives ADD COLUMN territory_id TEXT;
+        ALTER TABLE representatives ADD COLUMN payout_currency TEXT DEFAULT 'KES';
+        ALTER TABLE representatives ADD COLUMN payout_method TEXT DEFAULT 'MPESA';
+        ALTER TABLE representatives ADD COLUMN payout_destination TEXT;
+        ALTER TABLE representatives ADD COLUMN payout_bank_code TEXT DEFAULT 'MPS';
+        ALTER TABLE representatives ADD COLUMN payout_account_name TEXT;
+      `);
+    }
   } catch (err) {
     console.error('Error applying SQLite migrations:', err);
   }
@@ -202,6 +244,12 @@ async function ensurePostgresSchema(pg: postgres.Sql): Promise<void> {
           
           -- Phase 3 Migrations
           ALTER TABLE representatives ADD COLUMN IF NOT EXISTS referral_code TEXT UNIQUE;
+          ALTER TABLE representatives ADD COLUMN IF NOT EXISTS territory_id VARCHAR(16);
+          ALTER TABLE representatives ADD COLUMN IF NOT EXISTS payout_currency VARCHAR(8) DEFAULT 'KES';
+          ALTER TABLE representatives ADD COLUMN IF NOT EXISTS payout_method VARCHAR(32) DEFAULT 'MPESA';
+          ALTER TABLE representatives ADD COLUMN IF NOT EXISTS payout_destination TEXT;
+          ALTER TABLE representatives ADD COLUMN IF NOT EXISTS payout_bank_code VARCHAR(32) DEFAULT 'MPS';
+          ALTER TABLE representatives ADD COLUMN IF NOT EXISTS payout_account_name TEXT;
           
           ALTER TABLE leads ADD COLUMN IF NOT EXISTS client_id TEXT REFERENCES clients(id);
           ALTER TABLE leads ADD COLUMN IF NOT EXISTS service_id TEXT REFERENCES services(id);
@@ -235,21 +283,37 @@ async function ensurePostgresSchema(pg: postgres.Sql): Promise<void> {
           ALTER TABLE payments ADD COLUMN IF NOT EXISTS gross_amount_minor BIGINT;
           ALTER TABLE payments ADD COLUMN IF NOT EXISTS gateway_fee_minor BIGINT DEFAULT 0;
           ALTER TABLE payments ADD COLUMN IF NOT EXISTS net_amount_minor BIGINT;
+          ALTER TABLE payments ADD COLUMN IF NOT EXISTS client_id VARCHAR(64) REFERENCES clients(id);
+          ALTER TABLE payments ADD COLUMN IF NOT EXISTS provider_id VARCHAR(64) REFERENCES users(id);
+          ALTER TABLE payments ADD COLUMN IF NOT EXISTS transaction_currency VARCHAR(8);
+          ALTER TABLE payments ADD COLUMN IF NOT EXISTS amount_transaction_minor BIGINT;
           ALTER TABLE payments ADD COLUMN IF NOT EXISTS settlement_status VARCHAR(32) DEFAULT 'PENDING';
           ALTER TABLE payments ADD COLUMN IF NOT EXISTS settlement_currency VARCHAR(8);
           ALTER TABLE payments ADD COLUMN IF NOT EXISTS settlement_amount_minor BIGINT;
+          ALTER TABLE payments ADD COLUMN IF NOT EXISTS settlement_exchange_rate NUMERIC(18, 6);
+          ALTER TABLE payments ADD COLUMN IF NOT EXISTS exchange_rate_source VARCHAR(64);
           ALTER TABLE payments ADD COLUMN IF NOT EXISTS settlement_destination TEXT;
+          ALTER TABLE payments ADD COLUMN IF NOT EXISTS amount_refunded_minor BIGINT DEFAULT 0;
+          ALTER TABLE payments ADD COLUMN IF NOT EXISTS remaining_refundable_minor BIGINT;
+          ALTER TABLE payments ADD COLUMN IF NOT EXISTS payout_status VARCHAR(32) DEFAULT 'RESERVED';
           ALTER TABLE payments ADD COLUMN IF NOT EXISTS metadata_json TEXT;
           ALTER TABLE payments ADD COLUMN IF NOT EXISTS paid_at TIMESTAMPTZ;
+          ALTER TABLE payments ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
 
-          ALTER TABLE payments DROP CONSTRAINT IF EXISTS payments_payment_method_check;
-          ALTER TABLE payments ADD CONSTRAINT payments_payment_method_check CHECK (payment_method IN ('BANK_TRANSFER', 'CASH', 'OTHER_MANUAL', 'GATEWAY_SIMULATION', 'MPESA', 'CARD', 'FLUTTERWAVE'));
+          ALTER TABLE refunds ADD COLUMN IF NOT EXISTS requested_amount_minor BIGINT;
+          ALTER TABLE refunds ADD COLUMN IF NOT EXISTS approved_amount_minor BIGINT DEFAULT 0;
+          ALTER TABLE refunds ADD COLUMN IF NOT EXISTS retry_count INTEGER DEFAULT 0;
+          ALTER TABLE refunds ADD COLUMN IF NOT EXISTS original_refund_id VARCHAR(64) REFERENCES refunds(id);
+          ALTER TABLE refunds ADD COLUMN IF NOT EXISTS idempotency_key VARCHAR(128) UNIQUE;
+          ALTER TABLE refunds ADD COLUMN IF NOT EXISTS shortfall_minor BIGINT DEFAULT 0;
+          ALTER TABLE refunds ADD COLUMN IF NOT EXISTS operational_block_reason TEXT;
+          ALTER TABLE refunds ADD COLUMN IF NOT EXISTS approved_at TIMESTAMPTZ;
+          ALTER TABLE refunds ADD COLUMN IF NOT EXISTS initiated_at TIMESTAMPTZ;
+          ALTER TABLE refunds ADD COLUMN IF NOT EXISTS failed_at TIMESTAMPTZ;
 
-          ALTER TABLE payments DROP CONSTRAINT IF EXISTS payments_verification_source_check;
-          ALTER TABLE payments ADD CONSTRAINT payments_verification_source_check CHECK (verification_source IN ('MANUAL_VERIFICATION', 'BANK_TRANSFER_CONFIRMATION', 'GATEWAY_SIMULATION', 'FLUTTERWAVE_WEBHOOK', 'M_PESA_CALLBACK'));
-
-          ALTER TABLE payments DROP CONSTRAINT IF EXISTS payments_status_check;
-          ALTER TABLE payments ADD CONSTRAINT payments_status_check CHECK (status IN ('PENDING', 'CONFIRMED', 'SUCCESSFUL', 'FAILED', 'CANCELLED', 'REFUNDED'));
+          ALTER TABLE disputes ADD COLUMN IF NOT EXISTS evidence_status VARCHAR(32) DEFAULT 'EVIDENCE_REQUIRED';
+          ALTER TABLE disputes ADD COLUMN IF NOT EXISTS evidence_submitted_at TIMESTAMPTZ;
+          ALTER TABLE disputes ADD COLUMN IF NOT EXISTS resolution_notes TEXT;
 
           CREATE INDEX IF NOT EXISTS idx_payments_gateway_tx ON payments(gateway_transaction_id);
           CREATE UNIQUE INDEX IF NOT EXISTS idx_payments_unique_flw_ref ON payments(gateway_reference) WHERE gateway_reference IS NOT NULL;
@@ -297,7 +361,8 @@ export async function query<T = any>(sql: string, params: any[] = []): Promise<T
   }
 
   const sqlite = getSqliteClient();
-  const stmt = sqlite.prepare(sql);
+  const sqliteSql = sql.replace(/\bFOR UPDATE(?: OF [a-zA-Z0-9_, ]+)?\b/ig, '');
+  const stmt = sqlite.prepare(sqliteSql);
   const rows = stmt.all(...params);
   return rows.map((r: any) => ({ ...r })) as T[];
 }
@@ -320,7 +385,8 @@ export async function queryOne<T = any>(sql: string, params: any[] = []): Promis
   }
 
   const sqlite = getSqliteClient();
-  const stmt = sqlite.prepare(sql);
+  const sqliteSql = sql.replace(/\bFOR UPDATE(?: OF [a-zA-Z0-9_, ]+)?\b/ig, '');
+  const stmt = sqlite.prepare(sqliteSql);
   const row = stmt.get(...params);
   return row ? ({ ...row } as T) : null;
 }
@@ -388,12 +454,14 @@ export async function transaction<T>(fn: (tx: TransactionContext) => Promise<T>)
 
   const txContext: TransactionContext = {
     query: async <R = any>(sql: string, params: any[] = []): Promise<R[]> => {
-      const stmt = sqlite.prepare(sql);
+      const sqliteSql = sql.replace(/\bFOR UPDATE(?: OF [a-zA-Z0-9_, ]+)?\b/ig, '');
+      const stmt = sqlite.prepare(sqliteSql);
       const rows = stmt.all(...params);
       return rows.map((r: any) => ({ ...r })) as R[];
     },
     queryOne: async <R = any>(sql: string, params: any[] = []): Promise<R | null> => {
-      const stmt = sqlite.prepare(sql);
+      const sqliteSql = sql.replace(/\bFOR UPDATE(?: OF [a-zA-Z0-9_, ]+)?\b/ig, '');
+      const stmt = sqlite.prepare(sqliteSql);
       const row = stmt.get(...params);
       return row ? ({ ...row } as R) : null;
     },

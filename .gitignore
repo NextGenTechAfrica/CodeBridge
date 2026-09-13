@@ -16,6 +16,8 @@ data/
 *.db-journal
 *.db-wal
 *.db-shm
+*.sqlite
+schema_dump.json
 
 # Environment and secrets
 .env

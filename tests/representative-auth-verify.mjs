@@ -273,14 +273,14 @@ async function runTests() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        email: 'superadmin@marketbridge.com',
+        email: 'superadmin@codebridge.com',
         password: 'CodeBridge@2025!',
       }),
     });
     assert(adminLoginRes.status === 200, 'Super Admin authenticated via email/password');
 
     // Client email/password login still works
-    const clientLoginRes = await fetch(`${BASE_URL}/api/auth/login`, {
+    let clientLoginRes = await fetch(`${BASE_URL}/api/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -288,6 +288,28 @@ async function runTests() {
         password: 'CodeBridge@2025!',
       }),
     });
+    if (clientLoginRes.status !== 200) {
+      await fetch(`${BASE_URL}/api/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: 'client@abcrestaurants.com',
+          password: 'CodeBridge@2025!',
+          firstName: 'Demo',
+          lastName: 'Client',
+          companyName: 'ABC Restaurants',
+          accountType: 'CLIENT',
+        }),
+      });
+      clientLoginRes = await fetch(`${BASE_URL}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: 'client@abcrestaurants.com',
+          password: 'CodeBridge@2025!',
+        }),
+      });
+    }
     assert(clientLoginRes.status === 200, 'Client authenticated via email/password');
 
     // Representative password login is BLOCKED

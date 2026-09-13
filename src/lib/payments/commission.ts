@@ -1,7 +1,7 @@
 // src/lib/payments/commission.ts
 import { DbExecutor, recordCommissionAccrualLedgerEntry, recordPayoutSuccessLedgerEntry, recordRecoveryOffsetLedgerEntry } from './ledger';
 import { initiateFlutterwaveTransfer, verifyFlutterwaveTransfer } from './flutterwave';
-import { query, queryOne, execute, transaction } from '@/lib/db/connection';
+import { query, queryOne, execute, transaction } from '../db/connection';
 
 export interface CommissionCalculationResult {
   eligibleServiceMinor: number;
@@ -258,7 +258,7 @@ export async function recordCommissionAndQueuePayout(
     }
   }
 
-  // (e) If remaining net payable > 0, Queue Commission Payout
+    // (e) If remaining net payable > 0, Record Commission Payout in NOT_ELIGIBLE status (Funds remain reserved!)
   let payoutId: string | null = null;
   if (payableAmountMinor > 0) {
     payoutId = `payout_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
@@ -266,14 +266,19 @@ export async function recordCommissionAndQueuePayout(
     const payoutCurrency = rep.payout_currency || rep.territory_currency || invoice.currency;
     const payoutMethod = rep.payout_method || rep.default_payout_method || (payoutCurrency === 'KES' ? 'MPESA' : 'BANK');
     const payoutDest = rep.payout_destination || '254700000000';
+    const metadataJson = JSON.stringify({
+      basis: 'CODEBRIDGE_SERVICE_GROSS',
+      rateBps,
+      basisSnapshotMinor: calc.eligibleServiceMinor,
+    });
 
     await tx.execute(`
       INSERT INTO commission_payouts (
         id, sales_rep_id, commission_id, currency, amount_minor,
         payout_method, payout_destination, status, idempotency_key,
-        provider, retry_count, created_at, updated_at
+        provider, retry_count, metadata_json, created_at, updated_at
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, 'QUEUED', ?, 'flutterwave', 0, datetime('now'), datetime('now'))
+      VALUES (?, ?, ?, ?, ?, ?, ?, 'NOT_ELIGIBLE', ?, 'flutterwave', 0, ?, datetime('now'), datetime('now'))
     `, [
       payoutId,
       salesRepId,
@@ -283,6 +288,7 @@ export async function recordCommissionAndQueuePayout(
       payoutMethod,
       payoutDest,
       payoutIdempotencyKey,
+      metadataJson,
     ]);
   }
 
@@ -316,6 +322,14 @@ export async function executeQueuedPayoutAsync(
 
     if (payout.status === 'PAID') {
       return { success: true, status: 'PAID', message: 'Payout already completed.' };
+    }
+
+    if (payout.status === 'NOT_ELIGIBLE') {
+      return {
+        success: false,
+        status: 'NOT_ELIGIBLE',
+        message: 'Payout is NOT_ELIGIBLE for disbursement. Milestone completion and hold period clearance required.',
+      };
     }
 
     // Deterministic provider reference

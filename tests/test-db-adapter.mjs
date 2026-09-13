@@ -1,17 +1,31 @@
 // tests/test-db-adapter.mjs
+process.env.NODE_ENV = process.env.NODE_ENV || 'test';
+
 import fs from 'node:fs';
 import path from 'node:path';
 import postgres from 'postgres';
 import { DatabaseSync } from 'node:sqlite';
 
-function getDbUrl() {
-  if (process.env.DATABASE_URL) return process.env.DATABASE_URL;
-  const envPath = path.resolve(process.cwd(), '.env.local');
-  if (fs.existsSync(envPath)) {
-    const content = fs.readFileSync(envPath, 'utf-8');
-    const match = content.match(/^DATABASE_URL=(.*)$/m);
-    if (match) return match[1].trim().replace(/^["']|["']$/g, '');
+// Automatically load .env.local into process.env for isolated test runs
+const envPath = path.resolve(process.cwd(), '.env.local');
+if (fs.existsSync(envPath)) {
+  const content = fs.readFileSync(envPath, 'utf-8');
+  for (const line of content.split('\n')) {
+    const trimmed = line.trim();
+    if (trimmed && !trimmed.startsWith('#') && trimmed.includes('=')) {
+      const idx = trimmed.indexOf('=');
+      const k = trimmed.slice(0, idx).trim();
+      const v = trimmed.slice(idx + 1).trim().replace(/^["']|["']$/g, '');
+      if (!process.env[k]) {
+        process.env[k] = v;
+      }
+    }
   }
+}
+
+function getDbUrl() {
+  const url = process.env.DATABASE_URL || process.env.POSTGRES_URL || process.env.SUPABASE_DB_URL;
+  if (url) return url;
   return null;
 }
 
@@ -70,6 +84,20 @@ class TestDbAdapter {
     } else {
       return this.sqlite.prepare(query).run(...params);
     }
+  }
+
+  // DbExecutor methods
+  async query(sql, params = []) {
+    return await this.all(sql, params);
+  }
+
+  async queryOne(sql, params = []) {
+    return await this.get(sql, params);
+  }
+
+  async execute(sql, params = []) {
+    const res = await this.run(sql, params);
+    return { rowCount: res?.count ?? 1 };
   }
 
   async close() {

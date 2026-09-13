@@ -510,7 +510,7 @@ export default function HowItWorksPage() {
                   Corporate Governance
                 </h4>
                 <p style={{ fontSize: '13px', color: 'var(--cb-text-secondary)', lineHeight: 1.55 }}>
-                  Operated by MarketBridge NG LTD. All commercial agreements, non-disclosure covenants, and service level warranties are backed by verified corporate governance.
+                  CodeBridge is part of the NextGen Tech ecosystem, with its technology managed by NextGen Tech's centralized Technical Department. All commercial agreements, non-disclosure covenants, and service level warranties are supported by structured project governance.
                 </p>
               </motion.div>
             </motion.div>

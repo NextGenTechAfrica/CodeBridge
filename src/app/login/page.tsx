@@ -36,8 +36,8 @@ export default function LoginPage() {
   }, []);
 
   const demoAccounts = [
-    { label: 'Super Admin', email: 'superadmin@marketbridge.com', role: 'SUPER_ADMIN' },
-    { label: 'Admin / Ops', email: 'ops@marketbridge.com', role: 'ADMIN' },
+    { label: 'Super Admin', email: 'superadmin@codebridge.com', role: 'SUPER_ADMIN' },
+    { label: 'Admin / Ops', email: 'ops@codebridge.com', role: 'ADMIN' },
     { label: 'Country Manager', email: 'countrymanager.ke@codebridge.com', role: 'COUNTRY_MANAGER' },
     { label: 'Client', email: 'client@abcrestaurants.com', role: 'CLIENT' },
     { label: 'Developer', email: 'dev@codebridge.com', role: 'DEVELOPER' },

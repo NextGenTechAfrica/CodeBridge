@@ -89,7 +89,7 @@ export default function SuperAdminDashboard() {
             <ShieldCheck size={13} /> Super Administrator
           </div>
           <h1 style={{ fontSize: '26px', fontWeight: 800, color: 'var(--cb-text-primary)', letterSpacing: '-0.02em' }}>
-            MarketBridge Executive Console
+            CodeBridge Executive Console
           </h1>
           <p style={{ fontSize: '13px', color: 'var(--cb-text-secondary)', marginTop: '4px' }}>
             Central platform governance, representative approvals, and operational lead metrics across Nigeria & Kenya.
@@ -104,7 +104,8 @@ export default function SuperAdminDashboard() {
           fontSize: '12px',
           color: 'var(--cb-text-muted)'
         }}>
-          Owner: <strong>MarketBridge NG LTD</strong>
+          Platform: <strong>CodeBridge · NextGen Tech</strong><br/>
+          <span style={{ fontSize: '11px', color: 'var(--cb-text-tertiary)' }}>Technical Management: NextGen Tech Technical Department</span>
         </div>
       </div>
 

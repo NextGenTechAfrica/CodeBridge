@@ -60,10 +60,10 @@ async function runPhase2BTests() {
     // -------------------------------------------------------------------------
     console.log('1. Authenticating test actors across roles...');
 
-    const adminSession = await login('ops@marketbridge.com');
+    const adminSession = await login('ops@codebridge.com');
     assert(adminSession.user.role === 'ADMIN', 'Admin/Ops authenticated');
 
-    const superAdminSession = await login('superadmin@marketbridge.com');
+    const superAdminSession = await login('superadmin@codebridge.com');
     assert(superAdminSession.user.role === 'SUPER_ADMIN', 'Super Admin authenticated');
 
     const repSession = await login('rep.kenya@codebridge.com');

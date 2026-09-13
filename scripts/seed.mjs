@@ -73,12 +73,12 @@ const insertProfile = db.prepare(`
   VALUES (?, ?, ?, ?, ?, ?)
 `);
 
-// (1) SUPER ADMIN (MarketBridge owner/admin)
-insertUser.run('u_superadmin', 'superadmin@marketbridge.com', passwordHash, 'SUPER_ADMIN', 'ACTIVE');
-insertProfile.run('u_superadmin', 'MarketBridge', 'Administrator', '+2348000000001', 'c_ng', 'Africa/Lagos');
+// (1) SUPER ADMIN (CodeBridge owner/admin)
+insertUser.run('u_superadmin', 'superadmin@codebridge.com', passwordHash, 'SUPER_ADMIN', 'ACTIVE');
+insertProfile.run('u_superadmin', 'CodeBridge', 'Administrator', '+2348000000001', 'c_ng', 'Africa/Lagos');
 
 // (2) ADMIN / OPERATIONS
-insertUser.run('u_admin_ops', 'ops@marketbridge.com', passwordHash, 'ADMIN', 'ACTIVE');
+insertUser.run('u_admin_ops', 'ops@codebridge.com', passwordHash, 'ADMIN', 'ACTIVE');
 insertProfile.run('u_admin_ops', 'Operations', 'Lead', '+2348000000002', 'c_ng', 'Africa/Lagos');
 
 // (3) COUNTRY MANAGER (Kenya)

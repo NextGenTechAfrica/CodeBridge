@@ -163,34 +163,179 @@ export default function RepresentativeOnboardingPage() {
           )}
 
           <form onSubmit={handleComplete}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '28px' }}>
-              <div className="cb-form-group">
-                <label className="cb-label" style={{ textAlign: 'left', display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 600, color: 'var(--cb-text-primary)' }}>Country Name *</label>
-                <input
-                  type="text"
-                  required
-                  value={selectedCountry}
-                  onChange={(e) => setSelectedCountry(e.target.value)}
-                  className="cb-input"
-                  placeholder="e.g. United States"
-                  style={{ width: '100%', padding: '14px', borderRadius: '12px', border: '1px solid var(--cb-border-subtle)', backgroundColor: 'var(--cb-bg-input)', color: 'var(--cb-text-primary)', fontSize: '15px' }}
-                />
+            <div style={{ textAlign: 'left' }}>
+                <label
+                  style={{
+                    display: 'block',
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    color: 'var(--cb-text-primary)',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    marginBottom: '10px',
+                  }}
+                >
+                  Select Operating Country *
+                </label>
+
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 1fr',
+                    gap: '14px',
+                  }}
+                >
+                  {[
+                    {
+                      code: 'NG',
+                      name: 'Nigeria',
+                      flag: '🇳🇬',
+                      currency: 'NGN (₦)',
+                      region: 'West Africa Hub',
+                      cities: 'Lagos, Abuja & Nationwide',
+                      settlement: 'Direct Bank Settlement (NGN)',
+                    },
+                    {
+                      code: 'KE',
+                      name: 'Kenya',
+                      flag: '🇰🇪',
+                      currency: 'KES (KSh)',
+                      region: 'East Africa Hub',
+                      cities: 'Nairobi, Mombasa & Nationwide',
+                      settlement: 'M-PESA & Bank Settlement (KES)',
+                    },
+                  ].map((country) => {
+                    const isSelected = selectedCountry === country.code;
+                    return (
+                      <div
+                        key={country.code}
+                        onClick={() => setSelectedCountry(country.code)}
+                        style={{
+                          padding: '18px 16px',
+                          borderRadius: '14px',
+                          border: isSelected
+                            ? '2px solid #00B4D8'
+                            : '1px solid var(--cb-border-subtle)',
+                          backgroundColor: isSelected
+                            ? 'rgba(0, 180, 216, 0.08)'
+                            : 'var(--cb-bg-input)',
+                          cursor: 'pointer',
+                          transition: 'all 0.15s ease',
+                          position: 'relative',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          justifyContent: 'space-between',
+                          boxShadow: isSelected
+                            ? '0 6px 20px rgba(0, 180, 216, 0.25)'
+                            : 'none',
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            marginBottom: '12px',
+                          }}
+                        >
+                          <span style={{ fontSize: '32px', lineHeight: 1 }}>
+                            {country.flag}
+                          </span>
+                          <div
+                            style={{
+                              width: '22px',
+                              height: '22px',
+                              borderRadius: '50%',
+                              border: isSelected
+                                ? '6px solid #00B4D8'
+                                : '2px solid var(--cb-border-subtle)',
+                              backgroundColor: '#FFFFFF',
+                              transition: 'all 0.15s ease',
+                            }}
+                          />
+                        </div>
+
+                        <div>
+                          <div
+                            style={{
+                              fontSize: '17px',
+                              fontWeight: 800,
+                              color: 'var(--cb-text-primary)',
+                              letterSpacing: '-0.02em',
+                              marginBottom: '4px',
+                            }}
+                          >
+                            {country.name}
+                          </div>
+                          <div
+                            style={{
+                              display: 'inline-block',
+                              fontSize: '11px',
+                              fontWeight: 700,
+                              padding: '2px 8px',
+                              borderRadius: '6px',
+                              backgroundColor: isSelected
+                                ? '#00B4D8'
+                                : 'var(--cb-bg-card)',
+                              color: isSelected
+                                ? '#FFFFFF'
+                                : 'var(--cb-text-secondary)',
+                              marginBottom: '8px',
+                            }}
+                          >
+                            {country.currency}
+                          </div>
+                          <div
+                            style={{
+                              fontSize: '11px',
+                              color: 'var(--cb-text-muted)',
+                              lineHeight: 1.3,
+                            }}
+                          >
+                            {country.cities}
+                          </div>
+                          <div
+                            style={{
+                              fontSize: '10px',
+                              color: isSelected
+                                ? '#0284C7'
+                                : 'var(--cb-text-muted)',
+                              fontWeight: 600,
+                              marginTop: '6px',
+                            }}
+                          >
+                            {country.settlement}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || !selectedCountry}
               className="cb-btn cb-btn-cyan"
               style={{
                 width: '100%',
                 padding: '14px',
                 fontSize: '15px',
-                cursor: loading ? 'not-allowed' : 'pointer',
-                opacity: loading ? 0.75 : 1,
+                fontWeight: 700,
+                cursor: loading || !selectedCountry ? 'not-allowed' : 'pointer',
+                opacity: loading || !selectedCountry ? 0.6 : 1,
+                boxShadow: selectedCountry
+                  ? '0 4px 14px rgba(0, 180, 216, 0.35)'
+                  : 'none',
               }}
             >
-              {loading ? 'Activating Profile...' : 'Complete Onboarding & Enter Dashboard'}
+              {loading
+                ? 'Activating Profile...'
+                : selectedCountry === 'NG'
+                ? 'Activate Profile for Nigeria (NGN)'
+                : selectedCountry === 'KE'
+                ? 'Activate Profile for Kenya (KES)'
+                : 'Select Nigeria or Kenya to Continue'}
             </button>
           </form>
         </div>

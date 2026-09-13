@@ -198,7 +198,7 @@ export async function POST(req: NextRequest) {
         resolvedClientId = existingClient.id;
       } else {
         const existingUser = await queryOne('SELECT id FROM users WHERE email = ?', [lead.email.toLowerCase()]);
-        const adminUser = await queryOne('SELECT password_hash FROM users WHERE email = ?', ['ops@marketbridge.com']);
+        const adminUser = await queryOne('SELECT password_hash FROM users WHERE email = ?', ['ops@codebridge.com']);
         const passHash = adminUser?.password_hash || '$2a$10$DemoClientPlaceholderHash1234567890abcdef';
 
         const clientUserId = existingUser ? existingUser.id : `u_cli_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;

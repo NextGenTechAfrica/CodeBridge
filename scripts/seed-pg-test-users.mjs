@@ -24,8 +24,8 @@ async function seedPg() {
 
   // Users to seed
   const users = [
-    { id: 'u_superadmin', email: 'superadmin@marketbridge.com', role: 'SUPER_ADMIN', hash: passwordHash, fn: 'MarketBridge', ln: 'Administrator', phone: '+2348000000001', country: 'c_ng' },
-    { id: 'u_admin_ops', email: 'ops@marketbridge.com', role: 'ADMIN', hash: passwordHash, fn: 'Operations', ln: 'Lead', phone: '+2348000000002', country: 'c_ng' },
+    { id: 'u_superadmin', email: 'superadmin@codebridge.com', role: 'SUPER_ADMIN', hash: passwordHash, fn: 'CodeBridge', ln: 'Administrator', phone: '+2348000000001', country: 'c_ng' },
+    { id: 'u_admin_ops', email: 'ops@codebridge.com', role: 'ADMIN', hash: passwordHash, fn: 'Operations', ln: 'Lead', phone: '+2348000000002', country: 'c_ng' },
     { id: 'u_cm_ke', email: 'countrymanager.ke@codebridge.com', role: 'COUNTRY_MANAGER', hash: passwordHash, fn: 'David', ln: 'Kariuki', phone: '+2547000000001', country: 'c_ke' },
     { id: 'u_rep_ke_active', email: 'rep.kenya@codebridge.com', role: 'REPRESENTATIVE', hash: 'oauth:google', fn: 'Joseph', ln: 'Mwangi', phone: '+2547110000001', country: 'c_ke' },
     { id: 'u_dev', email: 'dev@codebridge.com', role: 'DEVELOPER', hash: passwordHash, fn: 'Tunde', ln: 'Adeyemi', phone: '+2348000000003', country: 'c_ng' },

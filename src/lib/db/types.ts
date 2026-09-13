@@ -280,15 +280,29 @@ export interface Invoice {
   updated_at: string;
 }
 
+export type PaymentStatus =
+  | 'INITIATED'
+  | 'PENDING_VERIFICATION'
+  | 'VERIFIED'
+  | 'SETTLED'
+  | 'FAILED'
+  | 'EXPIRED'
+  | 'CONFIRMED'
+  | 'SUCCESSFUL'
+  | 'CANCELLED'
+  | 'REFUNDED';
+
 export interface Payment {
   id: string;
   invoice_id: string;
   project_id: string;
+  client_id?: string;
+  provider_id?: string;
   amount_minor: number;
   currency: CurrencyCode;
   payment_method: PaymentMethod;
   verification_source: VerificationSource;
-  status: 'PENDING' | 'CONFIRMED' | 'SUCCESSFUL' | 'FAILED' | 'CANCELLED' | 'REFUNDED';
+  status: PaymentStatus;
   reference: string;
   gateway?: string;
   gateway_transaction_id?: string;
@@ -296,16 +310,24 @@ export interface Payment {
   gross_amount_minor?: number;
   gateway_fee_minor?: number;
   net_amount_minor?: number;
+  transaction_currency?: CurrencyCode | string;
+  amount_transaction_minor?: number;
   settlement_status?: 'PENDING' | 'SETTLED' | 'NOT_APPLICABLE';
-  settlement_currency?: CurrencyCode;
+  settlement_currency?: CurrencyCode | string;
   settlement_amount_minor?: number;
+  settlement_exchange_rate?: number;
+  exchange_rate_source?: string;
   settlement_destination?: string;
+  amount_refunded_minor?: number;
+  remaining_refundable_minor?: number;
+  payout_status?: 'RESERVED' | 'ELIGIBLE' | 'PARTIALLY_RELEASED' | 'RELEASED';
   metadata_json?: string;
   paid_at?: string;
   verified_at: string;
   verified_by: string;
   verification_notes?: string;
   created_at: string;
+  updated_at?: string;
 }
 
 export interface CommissionEvent {
@@ -334,6 +356,8 @@ export interface Commission {
   commission_amount_minor: number;
   currency: CurrencyCode;
   status: CommissionStatus;
+  basis_snapshot_json?: string;
+  eligible_at?: string;
   created_at: string;
   updated_at: string;
 }
@@ -350,12 +374,44 @@ export interface CommissionLedger {
 }
 
 export type DoubleEntryAccount =
+  // Cash / Asset Locations (Physical Accounts)
+  | 'GATEWAY_KES_BALANCE'
+  | 'GATEWAY_NGN_BALANCE'
+  | 'BANK_NGN_BALANCE'
+  | 'SETTLEMENT_IN_TRANSIT'
   | 'BUSINESS_CASH'
+  | 'RECOVERY_RECEIVABLE'
+  // Liabilities (Obligations)
+  | 'CLIENT_FUNDS_LIABILITY'
   | 'CLIENT_RECEIVABLE'
-  | 'COMMISSION_EXPENSE'
+  | 'PROVIDER_PAYABLE'
+  | 'REPRESENTATIVE_COMMISSION_PAYABLE'
   | 'COMMISSION_PAYABLE'
+  | 'REFUND_LIABILITY'
+  | 'TAX_PAYABLE'
+  // Equity & Revenues
+  | 'CODEBRIDGE_REVENUE'
+  | 'CODEBRIDGE_REVENUE_DEFERRED'
+  // Expenses & Contra-Revenues
+  | 'GATEWAY_FEE_EXPENSE'
   | 'REFUND_EXPENSE'
-  | 'RECOVERY_RECEIVABLE';
+  | 'REFUND_FEE_EXPENSE'
+  | 'COMMISSION_EXPENSE'
+  | 'FX_GAIN'
+  | 'FX_LOSS'
+  | 'CHARGEBACK_EXPENSE'
+  | 'BAD_DEBT_EXPENSE';
+
+export interface LedgerAccount {
+  id: string;
+  code: string;
+  name: string;
+  account_type: 'ASSET' | 'LIABILITY' | 'EQUITY' | 'REVENUE' | 'EXPENSE' | 'CONTRA_REVENUE';
+  normal_balance: 'DEBIT' | 'CREDIT';
+  currency: string;
+  is_active: number;
+  created_at: string;
+}
 
 export type LedgerEntryType =
   | 'PAYMENT'
@@ -396,7 +452,18 @@ export interface Territory {
   created_at: string;
 }
 
-export type CommissionPayoutStatus = 'QUEUED' | 'PROCESSING' | 'PAID' | 'FAILED' | 'ACTION_REQUIRED' | 'CANCELLED';
+export type CommissionPayoutStatus =
+  | 'NOT_ELIGIBLE'
+  | 'ELIGIBLE'
+  | 'QUEUED'
+  | 'INITIATED'
+  | 'CONFIRMED'
+  | 'PAID'
+  | 'PROCESSING'
+  | 'FAILED'
+  | 'ACTION_REQUIRED'
+  | 'MANUAL_REVIEW'
+  | 'CANCELLED';
 
 export interface CommissionPayout {
   id: string;
@@ -420,7 +487,20 @@ export interface CommissionPayout {
   updated_at: string;
 }
 
-export type RefundStatus = 'REQUESTED' | 'PROCESSING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
+export type RefundStatus =
+  | 'REQUESTED'
+  | 'UNDER_REVIEW'
+  | 'REJECTED'
+  | 'APPROVED'
+  | 'INSUFFICIENT_FUNDS'
+  | 'INITIATED'
+  | 'PROCESSING'
+  | 'SUCCESSFUL'
+  | 'FAILED'
+  | 'MANUAL_INTERVENTION_REQUIRED'
+  | 'ABANDONED'
+  | 'COMPLETED'
+  | 'CANCELLED';
 
 export interface Refund {
   id: string;
@@ -432,6 +512,8 @@ export interface Refund {
   currency: string;
   amount_minor: number;
   completed_amount_minor: number;
+  requested_amount_minor?: number;
+  approved_amount_minor?: number;
   commission_reversal_minor: number;
   status: RefundStatus;
   refund_reference: string;
@@ -439,8 +521,16 @@ export interface Refund {
   provider_reference?: string | null;
   reason?: string | null;
   failure_reason?: string | null;
+  retry_count?: number;
+  original_refund_id?: string | null;
+  idempotency_key?: string | null;
+  shortfall_minor?: number;
+  operational_block_reason?: string | null;
   created_at: string;
+  approved_at?: string | null;
+  initiated_at?: string | null;
   completed_at?: string | null;
+  failed_at?: string | null;
   updated_at: string;
 }
 
@@ -461,7 +551,15 @@ export interface CommissionAdjustment {
   created_at: string;
 }
 
-export type DisputeStatus = 'DISPUTE_OPEN' | 'DISPUTE_WON' | 'DISPUTE_LOST';
+export type DisputeStatus =
+  | 'OPENED'
+  | 'EVIDENCE_REQUIRED'
+  | 'EVIDENCE_SUBMITTED'
+  | 'WON'
+  | 'LOST'
+  | 'DISPUTE_OPEN'
+  | 'DISPUTE_WON'
+  | 'DISPUTE_LOST';
 
 export interface Dispute {
   id: string;
@@ -471,9 +569,86 @@ export interface Dispute {
   currency: string;
   status: DisputeStatus;
   provider_dispute_id?: string | null;
+  evidence_status?: string | null;
+  evidence_submitted_at?: string | null;
   reason?: string | null;
+  resolution_notes?: string | null;
   created_at: string;
   resolved_at?: string | null;
+}
+
+export interface WebhookEvent {
+  id: string;
+  provider: string;
+  event_id: string;
+  event_type: string;
+  payload_json: string;
+  signature?: string | null;
+  status: 'RECEIVED' | 'PROCESSED' | 'FAILED' | 'IGNORED';
+  processed_at?: string | null;
+  error_message?: string | null;
+  created_at: string;
+}
+
+export interface ExchangeRate {
+  id: string;
+  from_currency: string;
+  to_currency: string;
+  rate: number;
+  rate_source: string;
+  source_timestamp: string;
+  created_at: string;
+}
+
+export interface ReconciliationRun {
+  id: string;
+  run_type: string;
+  status: string;
+  discrepancy_count: number;
+  metrics_json?: string | null;
+  discrepancies_json?: string | null;
+  started_at: string;
+  completed_at?: string | null;
+}
+
+export type ProviderPayoutStatus =
+  | 'NOT_ELIGIBLE'
+  | 'ELIGIBLE'
+  | 'QUEUED'
+  | 'INITIATED'
+  | 'CONFIRMED'
+  | 'FAILED'
+  | 'MANUAL_REVIEW';
+
+export interface ProviderPayout {
+  id: string;
+  project_id: string;
+  provider_id: string;
+  milestone_id?: string | null;
+  currency: string;
+  amount_minor: number;
+  status: ProviderPayoutStatus;
+  idempotency_key: string;
+  eligible_at?: string | null;
+  paid_at?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export type ProviderRecoveryStatus = 'OPEN' | 'PARTIALLY_RECOVERED' | 'RECOVERED' | 'WRITTEN_OFF';
+
+export interface ProviderRecovery {
+  id: string;
+  entity_type: 'REPRESENTATIVE' | 'PROVIDER';
+  entity_id: string;
+  refund_id?: string | null;
+  dispute_id?: string | null;
+  currency: string;
+  amount_minor: number;
+  recovered_amount_minor: number;
+  status: ProviderRecoveryStatus;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface AuditLog {

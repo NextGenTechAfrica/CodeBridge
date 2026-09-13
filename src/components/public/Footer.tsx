@@ -178,7 +178,7 @@ export default function Footer() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <ShieldCheck size={16} color="#10B981" />
             <span>
-              A platform operated by <strong>MarketBridge NG LTD</strong> (RC 1894210). All rights reserved.
+              &copy; {new Date().getFullYear()} CodeBridge. A platform by NextGen Tech. All rights reserved.
             </span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>

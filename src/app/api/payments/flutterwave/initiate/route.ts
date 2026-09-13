@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
       WHERE c.id = ?
     `, [invoice.client_id]);
 
-    const customerEmail = clientRecord?.email || process.env.BILLING_EMAIL || 'billing@code-bridge-rosy.vercel.app';
+    const customerEmail = clientRecord?.email || session.email;
     const customerName = clientRecord
       ? `${clientRecord.first_name || ''} ${clientRecord.last_name || ''}`.trim() || clientRecord.company_name
       : 'CodeBridge Client';

@@ -259,6 +259,8 @@ CREATE TABLE IF NOT EXISTS payments (
   id TEXT PRIMARY KEY,
   invoice_id TEXT NOT NULL REFERENCES invoices(id),
   project_id TEXT NOT NULL REFERENCES projects(id),
+  client_id TEXT REFERENCES clients(id),
+  provider_id TEXT REFERENCES users(id),
   amount_minor INTEGER NOT NULL,
   currency TEXT NOT NULL CHECK (currency IN ('KES', 'NGN')),
   payment_method TEXT NOT NULL CHECK (payment_method IN ('BANK_TRANSFER', 'CASH', 'OTHER_MANUAL', 'GATEWAY_SIMULATION', 'MPESA', 'CARD', 'FLUTTERWAVE')),
@@ -266,7 +268,10 @@ CREATE TABLE IF NOT EXISTS payments (
     'MANUAL_VERIFICATION', 'BANK_TRANSFER_CONFIRMATION', 'GATEWAY_SIMULATION',
     'FLUTTERWAVE_WEBHOOK', 'M_PESA_CALLBACK'
   )),
-  status TEXT NOT NULL DEFAULT 'CONFIRMED' CHECK (status IN ('PENDING', 'CONFIRMED', 'SUCCESSFUL', 'FAILED', 'CANCELLED', 'REFUNDED')),
+  status TEXT NOT NULL DEFAULT 'INITIATED' CHECK (status IN (
+    'INITIATED', 'PENDING_VERIFICATION', 'VERIFIED', 'SETTLED', 'FAILED', 'EXPIRED',
+    'CONFIRMED', 'SUCCESSFUL', 'CANCELLED', 'REFUNDED'
+  )),
   reference TEXT UNIQUE NOT NULL,
   gateway TEXT NOT NULL DEFAULT 'flutterwave',
   gateway_transaction_id TEXT,
@@ -274,16 +279,25 @@ CREATE TABLE IF NOT EXISTS payments (
   gross_amount_minor INTEGER,
   gateway_fee_minor INTEGER DEFAULT 0,
   net_amount_minor INTEGER,
+  transaction_currency TEXT,
+  amount_transaction_minor INTEGER,
   settlement_status TEXT DEFAULT 'PENDING' CHECK (settlement_status IN ('PENDING', 'SETTLED', 'NOT_APPLICABLE')),
   settlement_currency TEXT,
   settlement_amount_minor INTEGER,
+  settlement_exchange_rate REAL,
+  exchange_rate_source TEXT,
   settlement_destination TEXT,
+  amount_refunded_minor INTEGER DEFAULT 0,
+  remaining_refundable_minor INTEGER,
+  payout_status TEXT DEFAULT 'RESERVED' CHECK (payout_status IN ('RESERVED', 'ELIGIBLE', 'PARTIALLY_RELEASED', 'RELEASED')),
   metadata_json TEXT,
   paid_at TEXT,
   verified_at TEXT NOT NULL,
   verified_by TEXT NOT NULL REFERENCES users(id),
   verification_notes TEXT,
-  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+  CHECK (amount_refunded_minor <= amount_minor)
 );
 
 CREATE INDEX IF NOT EXISTS idx_payments_invoice ON payments(invoice_id);
@@ -417,6 +431,235 @@ CREATE TABLE IF NOT EXISTS audit_logs (
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+-- Territories
+CREATE TABLE IF NOT EXISTS territories (
+  id TEXT PRIMARY KEY,
+  country_name TEXT NOT NULL,
+  currency TEXT NOT NULL,
+  default_payout_method TEXT NOT NULL DEFAULT 'BANK',
+  default_commission_rate_bps INTEGER NOT NULL DEFAULT 2000,
+  direct_admin INTEGER NOT NULL DEFAULT 0,
+  is_active INTEGER NOT NULL DEFAULT 1,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Ledger Accounts (Chart of accounts for internal double-entry)
+CREATE TABLE IF NOT EXISTS ledger_accounts (
+  id TEXT PRIMARY KEY,
+  code TEXT UNIQUE NOT NULL,
+  name TEXT NOT NULL,
+  account_type TEXT NOT NULL CHECK (account_type IN ('ASSET', 'LIABILITY', 'EQUITY', 'REVENUE', 'EXPENSE', 'CONTRA_REVENUE')),
+  normal_balance TEXT NOT NULL CHECK (normal_balance IN ('DEBIT', 'CREDIT')),
+  currency TEXT NOT NULL,
+  is_active INTEGER NOT NULL DEFAULT 1,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Immutable Double-Entry Ledger Table
+CREATE TABLE IF NOT EXISTS ledger_entries (
+  id TEXT PRIMARY KEY,
+  entry_type TEXT NOT NULL,
+  account_debited TEXT NOT NULL,
+  account_credited TEXT NOT NULL,
+  currency TEXT NOT NULL,
+  amount_minor INTEGER NOT NULL CHECK (amount_minor > 0),
+  invoice_id TEXT,
+  payment_id TEXT,
+  sales_rep_id TEXT,
+  project_id TEXT,
+  client_id TEXT,
+  reference TEXT NOT NULL,
+  notes TEXT,
+  metadata_json TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_ledger_invoice ON ledger_entries(invoice_id);
+CREATE INDEX IF NOT EXISTS idx_ledger_payment ON ledger_entries(payment_id);
+CREATE INDEX IF NOT EXISTS idx_ledger_rep ON ledger_entries(sales_rep_id);
+CREATE INDEX IF NOT EXISTS idx_ledger_reference ON ledger_entries(reference);
+CREATE INDEX IF NOT EXISTS idx_ledger_type ON ledger_entries(entry_type);
+
+-- Commission Payouts Table
+CREATE TABLE IF NOT EXISTS commission_payouts (
+  id TEXT PRIMARY KEY,
+  sales_rep_id TEXT NOT NULL,
+  commission_id TEXT,
+  currency TEXT NOT NULL,
+  amount_minor INTEGER NOT NULL CHECK (amount_minor > 0),
+  payout_method TEXT NOT NULL DEFAULT 'MPESA',
+  payout_destination TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'NOT_ELIGIBLE' CHECK (status IN (
+    'NOT_ELIGIBLE', 'ELIGIBLE', 'QUEUED', 'INITIATED', 'CONFIRMED', 'PAID', 'PROCESSING', 'FAILED', 'ACTION_REQUIRED', 'MANUAL_REVIEW', 'CANCELLED'
+  )),
+  idempotency_key TEXT NOT NULL UNIQUE,
+  provider TEXT NOT NULL DEFAULT 'flutterwave',
+  provider_transfer_id TEXT,
+  provider_reference TEXT,
+  failure_reason TEXT,
+  retry_count INTEGER NOT NULL DEFAULT 0,
+  last_attempt_at TEXT,
+  paid_at TEXT,
+  metadata_json TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_payouts_rep ON commission_payouts(sales_rep_id);
+CREATE INDEX IF NOT EXISTS idx_payouts_status ON commission_payouts(status);
+
+-- Refunds Table
+CREATE TABLE IF NOT EXISTS refunds (
+  id TEXT PRIMARY KEY,
+  payment_id TEXT NOT NULL,
+  invoice_id TEXT NOT NULL,
+  project_id TEXT,
+  client_id TEXT,
+  sales_rep_id TEXT,
+  currency TEXT NOT NULL,
+  amount_minor INTEGER NOT NULL CHECK (amount_minor > 0),
+  completed_amount_minor INTEGER NOT NULL DEFAULT 0,
+  requested_amount_minor INTEGER,
+  approved_amount_minor INTEGER DEFAULT 0,
+  commission_reversal_minor INTEGER NOT NULL DEFAULT 0,
+  status TEXT NOT NULL DEFAULT 'REQUESTED' CHECK (status IN (
+    'REQUESTED', 'UNDER_REVIEW', 'REJECTED', 'APPROVED', 'INSUFFICIENT_FUNDS',
+    'INITIATED', 'PROCESSING', 'SUCCESSFUL', 'FAILED', 'MANUAL_INTERVENTION_REQUIRED',
+    'ABANDONED', 'COMPLETED', 'CANCELLED'
+  )),
+  refund_reference TEXT NOT NULL UNIQUE,
+  provider_refund_id TEXT,
+  provider_reference TEXT,
+  reason TEXT,
+  failure_reason TEXT,
+  retry_count INTEGER NOT NULL DEFAULT 0,
+  original_refund_id TEXT REFERENCES refunds(id),
+  idempotency_key TEXT UNIQUE,
+  shortfall_minor INTEGER DEFAULT 0,
+  operational_block_reason TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  approved_at TEXT,
+  initiated_at TEXT,
+  completed_at TEXT,
+  failed_at TEXT,
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_refunds_payment ON refunds(payment_id);
+CREATE INDEX IF NOT EXISTS idx_refunds_invoice ON refunds(invoice_id);
+
+-- Commission Adjustments Table
+CREATE TABLE IF NOT EXISTS commission_adjustments (
+  id TEXT PRIMARY KEY,
+  sales_rep_id TEXT NOT NULL,
+  commission_id TEXT NOT NULL,
+  refund_id TEXT,
+  adjustment_type TEXT NOT NULL,
+  currency TEXT NOT NULL,
+  amount_minor INTEGER NOT NULL CHECK (amount_minor > 0),
+  recovery_status TEXT NOT NULL DEFAULT 'NONE',
+  notes TEXT,
+  metadata_json TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_comm_adj_rep ON commission_adjustments(sales_rep_id);
+CREATE INDEX IF NOT EXISTS idx_comm_adj_comm ON commission_adjustments(commission_id);
+
+-- Disputes Table
+CREATE TABLE IF NOT EXISTS disputes (
+  id TEXT PRIMARY KEY,
+  payment_id TEXT NOT NULL,
+  invoice_id TEXT NOT NULL,
+  amount_minor INTEGER NOT NULL CHECK (amount_minor > 0),
+  currency TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'OPENED' CHECK (status IN ('OPENED', 'EVIDENCE_REQUIRED', 'EVIDENCE_SUBMITTED', 'WON', 'LOST', 'DISPUTE_OPEN', 'DISPUTE_WON', 'DISPUTE_LOST')),
+  provider_dispute_id TEXT,
+  evidence_status TEXT DEFAULT 'EVIDENCE_REQUIRED',
+  evidence_submitted_at TEXT,
+  reason TEXT,
+  resolution_notes TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  resolved_at TEXT
+);
+
+-- Webhook Events (Raw event audit & deduplication)
+CREATE TABLE IF NOT EXISTS webhook_events (
+  id TEXT PRIMARY KEY,
+  provider TEXT NOT NULL,
+  event_id TEXT NOT NULL,
+  event_type TEXT NOT NULL,
+  payload_json TEXT NOT NULL,
+  signature TEXT,
+  status TEXT NOT NULL DEFAULT 'RECEIVED' CHECK (status IN ('RECEIVED', 'PROCESSED', 'FAILED', 'IGNORED')),
+  processed_at TEXT,
+  error_message TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE(provider, event_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_webhook_events_provider_event ON webhook_events(provider, event_id);
+CREATE INDEX IF NOT EXISTS idx_webhook_events_status ON webhook_events(status);
+
+-- Exchange Rates (Audit records for currency conversions)
+CREATE TABLE IF NOT EXISTS exchange_rates (
+  id TEXT PRIMARY KEY,
+  from_currency TEXT NOT NULL,
+  to_currency TEXT NOT NULL,
+  rate REAL NOT NULL,
+  rate_source TEXT NOT NULL,
+  source_timestamp TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Reconciliation Runs (Automated comparison runs)
+CREATE TABLE IF NOT EXISTS reconciliation_runs (
+  id TEXT PRIMARY KEY,
+  run_type TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'PENDING',
+  discrepancy_count INTEGER NOT NULL DEFAULT 0,
+  metrics_json TEXT,
+  discrepancies_json TEXT,
+  started_at TEXT NOT NULL DEFAULT (datetime('now')),
+  completed_at TEXT
+);
+
+-- Provider Payouts (Fulfillment/developer payouts decoupled from client payment)
+CREATE TABLE IF NOT EXISTS provider_payouts (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL REFERENCES projects(id),
+  provider_id TEXT NOT NULL REFERENCES users(id),
+  milestone_id TEXT REFERENCES project_milestones(id),
+  currency TEXT NOT NULL,
+  amount_minor INTEGER NOT NULL CHECK (amount_minor > 0),
+  status TEXT NOT NULL DEFAULT 'NOT_ELIGIBLE' CHECK (status IN (
+    'NOT_ELIGIBLE', 'ELIGIBLE', 'QUEUED', 'INITIATED', 'CONFIRMED', 'FAILED', 'MANUAL_REVIEW'
+  )),
+  idempotency_key TEXT UNIQUE NOT NULL,
+  eligible_at TEXT,
+  paid_at TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_provider_payouts_project ON provider_payouts(project_id);
+CREATE INDEX IF NOT EXISTS idx_provider_payouts_status ON provider_payouts(status);
+
+-- Provider Recoveries (Clawback obligations from providers/reps)
+CREATE TABLE IF NOT EXISTS provider_recoveries (
+  id TEXT PRIMARY KEY,
+  entity_type TEXT NOT NULL CHECK (entity_type IN ('REPRESENTATIVE', 'PROVIDER')),
+  entity_id TEXT NOT NULL,
+  refund_id TEXT REFERENCES refunds(id),
+  dispute_id TEXT REFERENCES disputes(id),
+  currency TEXT NOT NULL,
+  amount_minor INTEGER NOT NULL CHECK (amount_minor > 0),
+  recovered_amount_minor INTEGER NOT NULL DEFAULT 0,
+  status TEXT NOT NULL DEFAULT 'OPEN' CHECK (status IN ('OPEN', 'PARTIALLY_RECOVERED', 'RECOVERED', 'WRITTEN_OFF')),
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 -- Performance Indexes
 CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
 CREATE INDEX IF NOT EXISTS idx_users_status ON users(status);
@@ -439,4 +682,106 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_read_cursor_user_project
   ON message_read_cursors(user_id, project_id) WHERE project_id IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_change_requests_project ON change_requests(project_id);
 CREATE INDEX IF NOT EXISTS idx_change_requests_status ON change_requests(status);
+
+-- Immutability Triggers (Prevent accidental hard deletes of financial records in SQLite)
+CREATE TRIGGER IF NOT EXISTS prevent_delete_payments BEFORE DELETE ON payments
+BEGIN
+  SELECT RAISE(ABORT, 'Financial Immutability Violation: DELETE is prohibited on payments table.');
+END;
+
+CREATE TRIGGER IF NOT EXISTS prevent_delete_refunds BEFORE DELETE ON refunds
+BEGIN
+  SELECT RAISE(ABORT, 'Financial Immutability Violation: DELETE is prohibited on refunds table.');
+END;
+
+CREATE TRIGGER IF NOT EXISTS prevent_delete_ledger_entries BEFORE DELETE ON ledger_entries
+BEGIN
+  SELECT RAISE(ABORT, 'Financial Immutability Violation: DELETE is prohibited on ledger_entries table.');
+END;
+
+CREATE TRIGGER IF NOT EXISTS prevent_delete_commission_payouts BEFORE DELETE ON commission_payouts
+BEGIN
+  SELECT RAISE(ABORT, 'Financial Immutability Violation: DELETE is prohibited on commission_payouts table.');
+END;
+
+CREATE TRIGGER IF NOT EXISTS prevent_delete_provider_payouts BEFORE DELETE ON provider_payouts
+BEGIN
+  SELECT RAISE(ABORT, 'Financial Immutability Violation: DELETE is prohibited on provider_payouts table.');
+END;
+
+CREATE TRIGGER IF NOT EXISTS prevent_delete_webhook_events BEFORE DELETE ON webhook_events
+BEGIN
+  SELECT RAISE(ABORT, 'Financial Immutability Violation: DELETE is prohibited on webhook_events table.');
+END;
+
+-- Triggers for syncing refunds to payments (SQLite)
+CREATE TRIGGER IF NOT EXISTS trg_sync_payment_refund_cache_insert_sqlite
+AFTER INSERT ON refunds
+WHEN NEW.status IN ('SUCCESSFUL', 'COMPLETED')
+BEGIN
+  UPDATE payments
+  SET amount_refunded_minor = (
+        SELECT COALESCE(SUM(completed_amount_minor), 0)
+        FROM refunds
+        WHERE payment_id = NEW.payment_id
+          AND status IN ('SUCCESSFUL', 'COMPLETED')
+      ),
+      remaining_refundable_minor = MAX(0, amount_minor - (
+        SELECT COALESCE(SUM(completed_amount_minor), 0)
+        FROM refunds
+        WHERE payment_id = NEW.payment_id
+          AND status IN ('SUCCESSFUL', 'COMPLETED')
+      )),
+      status = CASE 
+                 WHEN (
+                   SELECT COALESCE(SUM(completed_amount_minor), 0)
+                   FROM refunds
+                   WHERE payment_id = NEW.payment_id
+                     AND status IN ('SUCCESSFUL', 'COMPLETED')
+                 ) >= amount_minor THEN 'REFUNDED'
+                 ELSE status
+               END,
+      updated_at = datetime('now')
+  WHERE id = NEW.payment_id;
+END;
+
+CREATE TRIGGER IF NOT EXISTS trg_sync_payment_refund_cache_update_sqlite
+AFTER UPDATE ON refunds
+WHEN NEW.status IN ('SUCCESSFUL', 'COMPLETED') OR OLD.status IN ('SUCCESSFUL', 'COMPLETED')
+BEGIN
+  UPDATE payments
+  SET amount_refunded_minor = (
+        SELECT COALESCE(SUM(completed_amount_minor), 0)
+        FROM refunds
+        WHERE payment_id = NEW.payment_id
+          AND status IN ('SUCCESSFUL', 'COMPLETED')
+      ),
+      remaining_refundable_minor = MAX(0, amount_minor - (
+        SELECT COALESCE(SUM(completed_amount_minor), 0)
+        FROM refunds
+        WHERE payment_id = NEW.payment_id
+          AND status IN ('SUCCESSFUL', 'COMPLETED')
+      )),
+      status = CASE 
+                 WHEN (
+                   SELECT COALESCE(SUM(completed_amount_minor), 0)
+                   FROM refunds
+                   WHERE payment_id = NEW.payment_id
+                     AND status IN ('SUCCESSFUL', 'COMPLETED')
+                 ) >= amount_minor THEN 'REFUNDED'
+                 ELSE status
+               END,
+      updated_at = datetime('now')
+  WHERE id = NEW.payment_id;
+END;
+
+-- Since SQLite doesn't allow bypassing triggers natively via something like session config, 
+-- and we no longer explicitly update amount_refunded_minor from app code, we can just block it
+-- unless the update is exactly what the trigger calculates? Actually we can just leave it out in SQLite
+-- or rely on the fact that we removed the manual UPDATE from application code.
+-- For true equivalence we just let the DB maintain it.
+
 `;
+
+
+

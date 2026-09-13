@@ -213,7 +213,7 @@ async function runTransactionAtomicityTests() {
     return { ok: res.ok, status: res.status, cookie, user: body.user };
   }
 
-  const adminSession = await login('ops@marketbridge.com');
+  const adminSession = await login('ops@codebridge.com');
   assert(adminSession.ok, 'Admin authenticated for commercial payment transaction test');
 
   // Fetch active representative for commission event link

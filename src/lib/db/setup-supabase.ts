@@ -377,12 +377,22 @@ ALTER TABLE payments ADD COLUMN IF NOT EXISTS gateway_reference VARCHAR(128);
 ALTER TABLE payments ADD COLUMN IF NOT EXISTS gross_amount_minor BIGINT;
 ALTER TABLE payments ADD COLUMN IF NOT EXISTS gateway_fee_minor BIGINT DEFAULT 0;
 ALTER TABLE payments ADD COLUMN IF NOT EXISTS net_amount_minor BIGINT;
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS client_id VARCHAR(64) REFERENCES clients(id);
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS provider_id VARCHAR(64) REFERENCES users(id);
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS transaction_currency VARCHAR(8);
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS amount_transaction_minor BIGINT;
 ALTER TABLE payments ADD COLUMN IF NOT EXISTS settlement_status VARCHAR(32) DEFAULT 'PENDING';
 ALTER TABLE payments ADD COLUMN IF NOT EXISTS settlement_currency VARCHAR(8);
 ALTER TABLE payments ADD COLUMN IF NOT EXISTS settlement_amount_minor BIGINT;
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS settlement_exchange_rate NUMERIC(18, 6);
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS exchange_rate_source VARCHAR(64);
 ALTER TABLE payments ADD COLUMN IF NOT EXISTS settlement_destination TEXT;
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS amount_refunded_minor BIGINT DEFAULT 0;
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS remaining_refundable_minor BIGINT;
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS payout_status VARCHAR(32) DEFAULT 'RESERVED';
 ALTER TABLE payments ADD COLUMN IF NOT EXISTS metadata_json TEXT;
 ALTER TABLE payments ADD COLUMN IF NOT EXISTS paid_at TIMESTAMPTZ;
+ALTER TABLE payments ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
 
 ALTER TABLE payments DROP CONSTRAINT IF EXISTS payments_payment_method_check;
 ALTER TABLE payments ADD CONSTRAINT payments_payment_method_check CHECK (payment_method IN ('BANK_TRANSFER', 'CASH', 'OTHER_MANUAL', 'GATEWAY_SIMULATION', 'MPESA', 'CARD', 'FLUTTERWAVE'));
@@ -391,11 +401,33 @@ ALTER TABLE payments DROP CONSTRAINT IF EXISTS payments_verification_source_chec
 ALTER TABLE payments ADD CONSTRAINT payments_verification_source_check CHECK (verification_source IN ('MANUAL_VERIFICATION', 'BANK_TRANSFER_CONFIRMATION', 'GATEWAY_SIMULATION', 'FLUTTERWAVE_WEBHOOK', 'M_PESA_CALLBACK'));
 
 ALTER TABLE payments DROP CONSTRAINT IF EXISTS payments_status_check;
-ALTER TABLE payments ADD CONSTRAINT payments_status_check CHECK (status IN ('PENDING', 'CONFIRMED', 'SUCCESSFUL', 'FAILED', 'CANCELLED', 'REFUNDED'));
+ALTER TABLE payments ADD CONSTRAINT payments_status_check CHECK (status IN ('INITIATED', 'PENDING_VERIFICATION', 'VERIFIED', 'SETTLED', 'FAILED', 'EXPIRED', 'CONFIRMED', 'SUCCESSFUL', 'CANCELLED', 'REFUNDED'));
+
+ALTER TABLE payments DROP CONSTRAINT IF EXISTS payments_refund_limit_check;
+ALTER TABLE payments ADD CONSTRAINT payments_refund_limit_check CHECK (amount_refunded_minor <= amount_minor);
 
 CREATE INDEX IF NOT EXISTS idx_payments_gateway_tx ON payments(gateway_transaction_id);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_payments_unique_flw_ref ON payments(gateway_reference) WHERE gateway_reference IS NOT NULL;
 CREATE UNIQUE INDEX IF NOT EXISTS idx_payments_unique_flw_tx_id ON payments(gateway_transaction_id) WHERE gateway_transaction_id IS NOT NULL;
+
+-- Refunds alterations
+ALTER TABLE refunds ADD COLUMN IF NOT EXISTS requested_amount_minor BIGINT;
+ALTER TABLE refunds ADD COLUMN IF NOT EXISTS approved_amount_minor BIGINT DEFAULT 0;
+ALTER TABLE refunds ADD COLUMN IF NOT EXISTS retry_count INTEGER DEFAULT 0;
+ALTER TABLE refunds ADD COLUMN IF NOT EXISTS original_refund_id VARCHAR(64) REFERENCES refunds(id);
+ALTER TABLE refunds ADD COLUMN IF NOT EXISTS idempotency_key VARCHAR(128) UNIQUE;
+ALTER TABLE refunds ADD COLUMN IF NOT EXISTS shortfall_minor BIGINT DEFAULT 0;
+ALTER TABLE refunds ADD COLUMN IF NOT EXISTS operational_block_reason TEXT;
+ALTER TABLE refunds ADD COLUMN IF NOT EXISTS approved_at TIMESTAMPTZ;
+ALTER TABLE refunds ADD COLUMN IF NOT EXISTS initiated_at TIMESTAMPTZ;
+ALTER TABLE refunds ADD COLUMN IF NOT EXISTS failed_at TIMESTAMPTZ;
+
+ALTER TABLE refunds DROP CONSTRAINT IF EXISTS refunds_status_check;
+ALTER TABLE refunds ADD CONSTRAINT refunds_status_check CHECK (status IN (
+  'REQUESTED', 'UNDER_REVIEW', 'REJECTED', 'APPROVED', 'INSUFFICIENT_FUNDS',
+  'INITIATED', 'PROCESSING', 'SUCCESSFUL', 'FAILED', 'MANUAL_INTERVENTION_REQUIRED',
+  'ABANDONED', 'COMPLETED', 'CANCELLED'
+));
 
 -- Commission Events (Immutable Financial Facts)
 CREATE TABLE IF NOT EXISTS commission_events (
@@ -613,6 +645,7 @@ CREATE TABLE IF NOT EXISTS commission_payouts (
 
 CREATE INDEX IF NOT EXISTS idx_payouts_rep ON commission_payouts(sales_rep_id);
 CREATE INDEX IF NOT EXISTS idx_payouts_status ON commission_payouts(status);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_payouts_unique_comm_rep ON commission_payouts(commission_id, sales_rep_id) WHERE commission_id IS NOT NULL;
 
 -- Refunds Table
 CREATE TABLE IF NOT EXISTS refunds (
@@ -665,12 +698,190 @@ CREATE TABLE IF NOT EXISTS disputes (
   invoice_id VARCHAR(64) NOT NULL,
   amount_minor BIGINT NOT NULL CHECK (amount_minor > 0),
   currency VARCHAR(8) NOT NULL,
-  status VARCHAR(32) NOT NULL DEFAULT 'DISPUTE_OPEN',
+  status VARCHAR(32) NOT NULL DEFAULT 'OPENED' CHECK (status IN ('OPENED', 'EVIDENCE_REQUIRED', 'EVIDENCE_SUBMITTED', 'WON', 'LOST', 'DISPUTE_OPEN', 'DISPUTE_WON', 'DISPUTE_LOST')),
   provider_dispute_id VARCHAR(128),
+  evidence_status VARCHAR(32) DEFAULT 'EVIDENCE_REQUIRED',
+  evidence_submitted_at TIMESTAMPTZ,
   reason TEXT,
+  resolution_notes TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   resolved_at TIMESTAMPTZ
 );
+
+-- Ledger Accounts (Chart of Accounts for internal double-entry)
+CREATE TABLE IF NOT EXISTS ledger_accounts (
+  id VARCHAR(64) PRIMARY KEY,
+  code VARCHAR(64) UNIQUE NOT NULL,
+  name TEXT NOT NULL,
+  account_type VARCHAR(32) NOT NULL CHECK (account_type IN ('ASSET', 'LIABILITY', 'EQUITY', 'REVENUE', 'EXPENSE', 'CONTRA_REVENUE')),
+  normal_balance VARCHAR(8) NOT NULL CHECK (normal_balance IN ('DEBIT', 'CREDIT')),
+  currency VARCHAR(8) NOT NULL,
+  is_active INTEGER NOT NULL DEFAULT 1,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Webhook Events (Raw event audit & deduplication)
+CREATE TABLE IF NOT EXISTS webhook_events (
+  id VARCHAR(64) PRIMARY KEY,
+  provider VARCHAR(32) NOT NULL,
+  event_id VARCHAR(128) NOT NULL,
+  event_type VARCHAR(64) NOT NULL,
+  payload_json TEXT NOT NULL,
+  signature TEXT,
+  status VARCHAR(32) NOT NULL DEFAULT 'RECEIVED' CHECK (status IN ('RECEIVED', 'PROCESSED', 'FAILED', 'IGNORED')),
+  processed_at TIMESTAMPTZ,
+  error_message TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE(provider, event_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_webhook_events_provider_event ON webhook_events(provider, event_id);
+CREATE INDEX IF NOT EXISTS idx_webhook_events_status ON webhook_events(status);
+
+-- Exchange Rates (Audit records for currency conversions)
+CREATE TABLE IF NOT EXISTS exchange_rates (
+  id VARCHAR(64) PRIMARY KEY,
+  from_currency VARCHAR(8) NOT NULL,
+  to_currency VARCHAR(8) NOT NULL,
+  rate NUMERIC(18, 6) NOT NULL,
+  rate_source VARCHAR(64) NOT NULL,
+  source_timestamp TIMESTAMPTZ NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Reconciliation Runs (Automated comparison runs)
+CREATE TABLE IF NOT EXISTS reconciliation_runs (
+  id VARCHAR(64) PRIMARY KEY,
+  run_type VARCHAR(32) NOT NULL,
+  status VARCHAR(32) NOT NULL DEFAULT 'PENDING',
+  discrepancy_count INTEGER NOT NULL DEFAULT 0,
+  metrics_json TEXT,
+  discrepancies_json TEXT,
+  started_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  completed_at TIMESTAMPTZ
+);
+
+-- Provider Payouts (Fulfillment/developer payouts decoupled from client payment)
+CREATE TABLE IF NOT EXISTS provider_payouts (
+  id VARCHAR(64) PRIMARY KEY,
+  project_id VARCHAR(64) NOT NULL REFERENCES projects(id),
+  provider_id VARCHAR(64) NOT NULL REFERENCES users(id),
+  milestone_id VARCHAR(64) REFERENCES project_milestones(id),
+  currency VARCHAR(8) NOT NULL,
+  amount_minor BIGINT NOT NULL CHECK (amount_minor > 0),
+  status VARCHAR(32) NOT NULL DEFAULT 'NOT_ELIGIBLE' CHECK (status IN (
+    'NOT_ELIGIBLE', 'ELIGIBLE', 'QUEUED', 'INITIATED', 'CONFIRMED', 'FAILED', 'MANUAL_REVIEW'
+  )),
+  idempotency_key VARCHAR(128) UNIQUE NOT NULL,
+  eligible_at TIMESTAMPTZ,
+  paid_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_provider_payouts_project ON provider_payouts(project_id);
+CREATE INDEX IF NOT EXISTS idx_provider_payouts_status ON provider_payouts(status);
+
+-- Provider Recoveries (Clawback obligations from providers/reps)
+CREATE TABLE IF NOT EXISTS provider_recoveries (
+  id VARCHAR(64) PRIMARY KEY,
+  entity_type VARCHAR(32) NOT NULL CHECK (entity_type IN ('REPRESENTATIVE', 'PROVIDER')),
+  entity_id VARCHAR(64) NOT NULL,
+  refund_id VARCHAR(64) REFERENCES refunds(id),
+  dispute_id VARCHAR(64) REFERENCES disputes(id),
+  currency VARCHAR(8) NOT NULL,
+  amount_minor BIGINT NOT NULL CHECK (amount_minor > 0),
+  recovered_amount_minor BIGINT NOT NULL DEFAULT 0,
+  status VARCHAR(32) NOT NULL DEFAULT 'OPEN' CHECK (status IN ('OPEN', 'PARTIALLY_RECOVERED', 'RECOVERED', 'WRITTEN_OFF')),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Financial Immutability Protection Trigger Function
+CREATE OR REPLACE FUNCTION prevent_financial_delete()
+RETURNS TRIGGER AS $$
+BEGIN
+  RAISE EXCEPTION 'Financial Immutability Violation: DELETE is strictly prohibited on table %', TG_TABLE_NAME;
+END;
+$$ LANGUAGE plpgsql;
+
+DO $$
+DECLARE
+  tbl_name text;
+BEGIN
+  FOR tbl_name IN SELECT unnest(ARRAY[
+    'payments', 'refunds', 'ledger_transactions', 'ledger_entries', 'commission_payouts',
+    'provider_payouts', 'disputes', 'webhook_events', 'provider_recoveries'
+  ])
+  LOOP
+    EXECUTE format('DROP TRIGGER IF EXISTS trg_prevent_delete ON %I;', tbl_name);
+    EXECUTE format('CREATE TRIGGER trg_prevent_delete BEFORE DELETE ON %I FOR EACH ROW EXECUTE FUNCTION prevent_financial_delete();', tbl_name);
+  END LOOP;
+END $$;
+
+-- Trigger to protect payments.amount_refunded_minor from direct client manipulation
+CREATE OR REPLACE FUNCTION protect_payment_refund_cache()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF NEW.amount_refunded_minor <> OLD.amount_refunded_minor AND current_setting('codebridge.sync_trigger_active', true) IS DISTINCT FROM 'true' THEN
+    RAISE EXCEPTION 'Financial Immutability Violation: Direct manipulation of payment refund cache is prohibited.';
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_protect_payment_refund_cache ON payments;
+CREATE TRIGGER trg_protect_payment_refund_cache
+BEFORE UPDATE ON payments
+FOR EACH ROW EXECUTE FUNCTION protect_payment_refund_cache();
+
+-- Trigger to sync refunds to payments
+CREATE OR REPLACE FUNCTION sync_payment_refund_cache()
+RETURNS TRIGGER AS $$
+DECLARE
+  v_total_refunded BIGINT;
+BEGIN
+  -- Sum all successful refunds
+  SELECT COALESCE(SUM(completed_amount_minor), 0)
+  INTO v_total_refunded
+  FROM refunds
+  WHERE payment_id = COALESCE(NEW.payment_id, OLD.payment_id)
+    AND status IN ('SUCCESSFUL', 'COMPLETED');
+
+  -- We must use SET LOCAL to tell the protection trigger we are allowed to update
+  PERFORM set_config('codebridge.sync_trigger_active', 'true', true);
+  
+  UPDATE payments
+  SET amount_refunded_minor = v_total_refunded,
+      remaining_refundable_minor = GREATEST(0, amount_minor - v_total_refunded),
+      status = CASE WHEN v_total_refunded >= amount_minor THEN 'REFUNDED' ELSE status END,
+      updated_at = NOW()
+  WHERE id = COALESCE(NEW.payment_id, OLD.payment_id);
+  
+  PERFORM set_config('codebridge.sync_trigger_active', '', true);
+
+  RETURN COALESCE(NEW, OLD);
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_sync_payment_refund_cache ON refunds;
+CREATE TRIGGER trg_sync_payment_refund_cache
+AFTER INSERT OR UPDATE OR DELETE ON refunds
+FOR EACH ROW EXECUTE FUNCTION sync_payment_refund_cache();
+
+
+-- Row Level Security (RLS) Enablement Across All Tables
+DO $$
+DECLARE
+  t text;
+BEGIN
+  FOR t IN SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_type = 'BASE TABLE'
+  LOOP
+    EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY;', t);
+    EXECUTE format('DROP POLICY IF EXISTS service_role_all ON %I;', t);
+    EXECUTE format('CREATE POLICY service_role_all ON %I FOR ALL TO service_role, postgres USING (true) WITH CHECK (true);', t);
+  END LOOP;
+END $$;
 
 -- Ensure permissions for Supabase Studio and service roles
 GRANT USAGE ON SCHEMA public TO postgres, anon, authenticated, service_role;
@@ -737,6 +948,42 @@ export async function setupSupabaseDatabase() {
       `;
     }
     console.log(`   ✅ Seeded ${FOUNDATIONAL_SERVICES.length} service catalog entries.`);
+
+    // 3b. Seed standard double-entry chart of accounts (ledger_accounts)
+    console.log('-> Seeding standard double-entry chart of accounts (ledger_accounts)...');
+    const standardAccounts = [
+      { id: 'la_gw_kes', code: 'GATEWAY_KES_BALANCE', name: 'Gateway KES Balance', type: 'ASSET', normal: 'DEBIT', currency: 'KES' },
+      { id: 'la_gw_ngn', code: 'GATEWAY_NGN_BALANCE', name: 'Gateway NGN Balance', type: 'ASSET', normal: 'DEBIT', currency: 'NGN' },
+      { id: 'la_bank_ngn', code: 'BANK_NGN_BALANCE', name: 'Nigerian Bank Settlement Balance', type: 'ASSET', normal: 'DEBIT', currency: 'NGN' },
+      { id: 'la_settle_transit', code: 'SETTLEMENT_IN_TRANSIT', name: 'Settlement in Transit', type: 'ASSET', normal: 'DEBIT', currency: 'NGN' },
+      { id: 'la_rec_receivable', code: 'RECOVERY_RECEIVABLE', name: 'Provider Recovery Receivable', type: 'ASSET', normal: 'DEBIT', currency: 'KES' },
+      { id: 'la_biz_cash', code: 'BUSINESS_CASH', name: 'General Business Cash', type: 'ASSET', normal: 'DEBIT', currency: 'KES' },
+      { id: 'la_client_funds', code: 'CLIENT_FUNDS_LIABILITY', name: 'Client Unearned Funds Liability', type: 'LIABILITY', normal: 'CREDIT', currency: 'KES' },
+      { id: 'la_client_rec', code: 'CLIENT_RECEIVABLE', name: 'Outstanding Client Invoice Receivable', type: 'LIABILITY', normal: 'DEBIT', currency: 'KES' },
+      { id: 'la_prov_payable', code: 'PROVIDER_PAYABLE', name: 'Provider Fulfillment Payable', type: 'LIABILITY', normal: 'CREDIT', currency: 'KES' },
+      { id: 'la_rep_payable', code: 'REPRESENTATIVE_COMMISSION_PAYABLE', name: 'Representative Commission Payable', type: 'LIABILITY', normal: 'CREDIT', currency: 'KES' },
+      { id: 'la_comm_payable', code: 'COMMISSION_PAYABLE', name: 'Accrued Commission Payable', type: 'LIABILITY', normal: 'CREDIT', currency: 'KES' },
+      { id: 'la_ref_liability', code: 'REFUND_LIABILITY', name: 'Customer Refund Liability', type: 'LIABILITY', normal: 'CREDIT', currency: 'KES' },
+      { id: 'la_tax_payable', code: 'TAX_PAYABLE', name: 'Sales / Withholding Tax Payable', type: 'LIABILITY', normal: 'CREDIT', currency: 'KES' },
+      { id: 'la_cb_rev', code: 'CODEBRIDGE_REVENUE', name: 'Recognized CodeBridge Revenue', type: 'REVENUE', normal: 'CREDIT', currency: 'KES' },
+      { id: 'la_cb_rev_def', code: 'CODEBRIDGE_REVENUE_DEFERRED', name: 'Deferred CodeBridge Revenue', type: 'EQUITY', normal: 'CREDIT', currency: 'KES' },
+      { id: 'la_fee_exp', code: 'GATEWAY_FEE_EXPENSE', name: 'Payment Gateway Processing Fee', type: 'EXPENSE', normal: 'DEBIT', currency: 'KES' },
+      { id: 'la_ref_exp', code: 'REFUND_EXPENSE', name: 'Client Refund Expense', type: 'CONTRA_REVENUE', normal: 'DEBIT', currency: 'KES' },
+      { id: 'la_ref_fee_exp', code: 'REFUND_FEE_EXPENSE', name: 'Provider Refund Fee Expense', type: 'EXPENSE', normal: 'DEBIT', currency: 'KES' },
+      { id: 'la_comm_exp', code: 'COMMISSION_EXPENSE', name: 'Sales Representative Commission Expense', type: 'EXPENSE', normal: 'DEBIT', currency: 'KES' },
+      { id: 'la_fx_gain', code: 'FX_GAIN', name: 'Foreign Exchange Gain', type: 'REVENUE', normal: 'CREDIT', currency: 'NGN' },
+      { id: 'la_fx_loss', code: 'FX_LOSS', name: 'Foreign Exchange Loss', type: 'EXPENSE', normal: 'DEBIT', currency: 'NGN' },
+      { id: 'la_cb_exp', code: 'CHARGEBACK_EXPENSE', name: 'Dispute / Chargeback Loss', type: 'EXPENSE', normal: 'DEBIT', currency: 'KES' },
+      { id: 'la_bad_debt', code: 'BAD_DEBT_EXPENSE', name: 'Unrecoverable Bad Debt Expense', type: 'EXPENSE', normal: 'DEBIT', currency: 'KES' },
+    ];
+    for (const acc of standardAccounts) {
+      await sql`
+        INSERT INTO ledger_accounts (id, code, name, account_type, normal_balance, currency, is_active)
+        VALUES (${acc.id}, ${acc.code}, ${acc.name}, ${acc.type}, ${acc.normal}, ${acc.currency}, 1)
+        ON CONFLICT (code) DO NOTHING;
+      `;
+    }
+    console.log('   ✅ Seeded standard chart of accounts.');
 
     // 4. Seed Initial Super Admin (Credentials MUST come from environment variables)
     const adminEmail = process.env.ADMIN_INITIAL_EMAIL?.trim().toLowerCase();

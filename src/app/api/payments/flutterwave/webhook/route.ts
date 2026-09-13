@@ -5,9 +5,11 @@ import { recordAuditLog } from '@/lib/auth/session';
 import { verifyWebhookSignature, verifyFlutterwaveTransaction } from '@/lib/payments/flutterwave';
 import { sendPaymentConfirmationNotification } from '@/lib/notifications/email';
 import { recordPaymentLedgerEntry, recordPayoutSuccessLedgerEntry } from '@/lib/payments/ledger';
-import { recordCommissionAndQueuePayout, executeQueuedPayoutAsync } from '@/lib/payments/commission';
+import { recordCommissionAndQueuePayout } from '@/lib/payments/commission';
+import { confirmRefundSuccess } from '@/lib/payments/refund';
 
 export async function POST(req: NextRequest) {
+  let webhookEventId: string | null = null;
   try {
     const rawBody = await req.text();
     const verifHash = req.headers.get('verif-hash');
@@ -20,7 +22,7 @@ export async function POST(req: NextRequest) {
     );
 
     if (!isSignatureValid) {
-      console.warn('[Flutterwave Webhook] Unauthorized request: Neither verif-hash nor flutterwave-signature matched.');
+      console.warn('[Flutterwave Webhook] Unauthorized request: Signature validation failed.');
       return NextResponse.json(
         { error: 'Webhook signature validation failed.' },
         { status: 401 }
@@ -35,7 +37,38 @@ export async function POST(req: NextRequest) {
     }
 
     const { event, data } = payload;
-    console.log(`[Flutterwave Webhook] Authenticated event: '${event}', tx_ref: '${data?.tx_ref}', id: ${data?.id}`);
+    const eventId = String(data?.id || payload?.id || data?.tx_ref || data?.reference || `${event}_${Date.now()}`);
+    const eventType = String(event || 'unknown');
+
+    // 2. Webhook Architecture: Store raw event with DB uniqueness constraint on (provider, event_id)
+    webhookEventId = `whe_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+    try {
+      await execute(`
+        INSERT INTO webhook_events (
+          id, provider, event_id, event_type, payload_json, signature, status, created_at
+        )
+        VALUES (?, 'flutterwave', ?, ?, ?, ?, 'RECEIVED', datetime('now'))
+      `, [
+        webhookEventId,
+        eventId,
+        eventType,
+        rawBody,
+        flutterwaveSignature || verifHash || null,
+      ]);
+    } catch (dupErr: any) {
+      const errMsg = String(dupErr?.message || '');
+      const isDuplicate = errMsg.includes('UNIQUE') || errMsg.includes('duplicate key') || dupErr?.code === '23505';
+      if (isDuplicate) {
+        console.log(`[Flutterwave Webhook] Idempotent skip: event ${eventId} already received and processed.`);
+        return NextResponse.json(
+          { status: 'already_processed', message: 'Webhook event already recorded and deduplicated.' },
+          { status: 200 }
+        );
+      }
+      throw dupErr;
+    }
+
+    console.log(`[Flutterwave Webhook] Authenticated event: '${event}', eventId: '${eventId}', tx_ref: '${data?.tx_ref}'`);
 
     // =========================================================================
     // BRANCH 1: TRANSFER COMPLETED (Commission Payout Webhook)
@@ -57,11 +90,13 @@ export async function POST(req: NextRequest) {
 
       if (!payout) {
         console.warn(`[Flutterwave Webhook] Transfer event received for unknown payout reference: ${trfRef}`);
+        await execute("UPDATE webhook_events SET status = 'PROCESSED', processed_at = datetime('now') WHERE id = ?", [webhookEventId]);
         return NextResponse.json({ message: 'Payout record not found.' }, { status: 200 });
       }
 
       // Idempotency: If already finalized as PAID, return 200 immediately
       if (payout.status === 'PAID') {
+        await execute("UPDATE webhook_events SET status = 'PROCESSED', processed_at = datetime('now') WHERE id = ?", [webhookEventId]);
         return NextResponse.json({ status: 'already_processed', message: 'Payout already marked PAID.' }, { status: 200 });
       }
 
@@ -80,7 +115,7 @@ export async function POST(req: NextRequest) {
             await tx.execute("UPDATE commissions SET status = 'PAID', updated_at = datetime('now') WHERE id = ?", [payout.commission_id]);
           }
 
-          // Double-Entry Ledger: Debit COMMISSION_PAYABLE, Credit BUSINESS_CASH
+          // Double-Entry Ledger: Debit REPRESENTATIVE_COMMISSION_PAYABLE, Credit GATEWAY_BALANCE
           await recordPayoutSuccessLedgerEntry(tx, {
             payoutId: payout.id,
             salesRepId: payout.sales_rep_id,
@@ -106,6 +141,7 @@ export async function POST(req: NextRequest) {
           ipAddress: req.headers.get('x-forwarded-for') || '127.0.0.1',
         });
 
+        await execute("UPDATE webhook_events SET status = 'PROCESSED', processed_at = datetime('now') WHERE id = ?", [webhookEventId]);
         return NextResponse.json({ status: 'success', message: 'Payout marked PAID and ledger updated.' }, { status: 200 });
       } else if (transferStatus === 'FAILED') {
         await execute(`
@@ -116,9 +152,11 @@ export async function POST(req: NextRequest) {
           WHERE id = ?
         `, [data?.complete_message || 'Transfer failed at provider', payout.id]);
 
+        await execute("UPDATE webhook_events SET status = 'PROCESSED', processed_at = datetime('now') WHERE id = ?", [webhookEventId]);
         return NextResponse.json({ status: 'failed', message: 'Payout marked FAILED.' }, { status: 200 });
       }
 
+      await execute("UPDATE webhook_events SET status = 'PROCESSED', processed_at = datetime('now') WHERE id = ?", [webhookEventId]);
       return NextResponse.json({ message: `Transfer event acknowledged with status ${transferStatus}.` }, { status: 200 });
     }
 
@@ -136,18 +174,23 @@ export async function POST(req: NextRequest) {
         [String(refundId || ''), String(txId || '')]
       );
 
-      if (refund && refundStatus === 'COMPLETED' && refund.status !== 'COMPLETED') {
-        await execute("UPDATE refunds SET status = 'COMPLETED', completed_at = datetime('now'), updated_at = datetime('now') WHERE id = ?", [refund.id]);
+      if (refund && (refundStatus === 'COMPLETED' || refundStatus === 'SUCCESSFUL')) {
+        await confirmRefundSuccess({
+          refundId: refund.id,
+          providerRefundId: String(refundId || ''),
+          providerReference: data?.flw_ref,
+        });
       }
 
+      await execute("UPDATE webhook_events SET status = 'PROCESSED', processed_at = datetime('now') WHERE id = ?", [webhookEventId]);
       return NextResponse.json({ message: 'Refund webhook acknowledged.' }, { status: 200 });
     }
 
     // =========================================================================
     // BRANCH 3: CHARGE COMPLETED (Client Collection Webhook)
     // =========================================================================
-    // If event is not charge completed, acknowledge without state change
     if (event !== 'charge.completed' && data?.status !== 'successful') {
+      await execute("UPDATE webhook_events SET status = 'PROCESSED', processed_at = datetime('now') WHERE id = ?", [webhookEventId]);
       return NextResponse.json({ message: 'Event acknowledged (non-charge event).' }, { status: 200 });
     }
 
@@ -155,74 +198,80 @@ export async function POST(req: NextRequest) {
     const txRef = data?.tx_ref;
 
     if (!transactionId || !txRef) {
+      await execute("UPDATE webhook_events SET status = 'FAILED', error_message = 'Missing transaction id or tx_ref' WHERE id = ?", [webhookEventId]);
       return NextResponse.json({ error: 'Missing transaction id or tx_ref in webhook payload.' }, { status: 400 });
     }
 
-    // 2. Authoritatively Verify Transaction with Flutterwave API (Never trust raw webhook data alone)
-    const verificationResponse = await verifyFlutterwaveTransaction(transactionId);
-    if (verificationResponse.status !== 'success' || !verificationResponse.data) {
-      console.error('[Flutterwave Webhook] API transaction verification failed:', verificationResponse);
+    // 3. Authoritative Verification via Flutterwave API
+    const verifyRes = await verifyFlutterwaveTransaction(transactionId);
+    if (verifyRes.status !== 'success' || !verifyRes.data) {
+      console.error(`[Flutterwave Webhook] API verification failed for transaction ID ${transactionId}:`, verifyRes.message);
+      await execute("UPDATE webhook_events SET status = 'FAILED', error_message = 'Flutterwave API verification failed' WHERE id = ?", [webhookEventId]);
       return NextResponse.json({ error: 'Authoritative transaction verification failed.' }, { status: 400 });
     }
 
-    const verifyData = verificationResponse.data;
-
-    if (verifyData.status !== 'successful') {
-      console.warn(`[Flutterwave Webhook] Transaction ${transactionId} status is '${verifyData.status}', not 'successful'.`);
-      return NextResponse.json({ message: 'Transaction not successful. No action taken.' }, { status: 200 });
+    const verifyData = verifyRes.data;
+    if (verifyData.status?.toLowerCase() !== 'successful') {
+      console.warn(`[Flutterwave Webhook] Transaction ${transactionId} status was '${verifyData.status}', not successful.`);
+      await execute("UPDATE webhook_events SET status = 'PROCESSED', processed_at = datetime('now') WHERE id = ?", [webhookEventId]);
+      return NextResponse.json({ message: `Transaction verified with status '${verifyData.status}'. No state change needed.` }, { status: 200 });
     }
 
-    // 3. Locate Associated Payment / Invoice by tx_ref
+    // Resolve Invoice
     const existingPayment = await queryOne<any>(
-      'SELECT * FROM payments WHERE reference = ? OR gateway_reference = ? OR gateway_transaction_id = ?',
-      [txRef, txRef, String(transactionId)]
+      'SELECT * FROM payments WHERE gateway_transaction_id = ? OR reference = ?',
+      [String(transactionId), txRef]
     );
 
-    let invoiceId = existingPayment?.invoice_id;
-    if (!invoiceId && verifyData.flw_ref) {
-      const metaInvoiceId = payload.data?.meta?.invoice_id || payload.meta?.invoice_id;
-      if (metaInvoiceId) invoiceId = metaInvoiceId;
-    }
-
-    if (!invoiceId) {
-      const parts = txRef.split('-');
-      if (parts.length >= 2) {
-        const potentialInvoiceId = `inv_${parts[1]}`;
-        const inv = await queryOne<any>('SELECT id FROM invoices WHERE id = ? OR id LIKE ?', [potentialInvoiceId, `%${parts[1]}%`]);
-        if (inv) invoiceId = inv.id;
+    let invoiceId: string | null = null;
+    if (existingPayment?.invoice_id) {
+      invoiceId = existingPayment.invoice_id;
+    } else {
+      const match = txRef.match(/^CB-INV-([a-zA-Z0-9_-]+)-\d+$/);
+      if (match) {
+        invoiceId = match[1];
+      } else {
+        const invByNum = await queryOne<any>('SELECT id FROM invoices WHERE invoice_number = ?', [txRef]);
+        if (invByNum) {
+          invoiceId = invByNum.id;
+        }
       }
     }
 
     if (!invoiceId) {
-      console.error(`[Flutterwave Webhook] Could not associate tx_ref '${txRef}' with any known invoice.`);
-      return NextResponse.json({ error: 'Associated invoice could not be located.' }, { status: 404 });
+      console.error(`[Flutterwave Webhook] Could not resolve invoice ID for tx_ref: ${txRef}`);
+      await execute("UPDATE webhook_events SET status = 'FAILED', error_message = 'Unresolvable invoice ID' WHERE id = ?", [webhookEventId]);
+      return NextResponse.json({ error: 'Unresolvable invoice ID from tx_ref.' }, { status: 400 });
     }
 
     const invoice = await queryOne<any>('SELECT * FROM invoices WHERE id = ?', [invoiceId]);
     if (!invoice) {
+      await execute("UPDATE webhook_events SET status = 'FAILED', error_message = 'Invoice not found' WHERE id = ?", [webhookEventId]);
       return NextResponse.json({ error: 'Invoice not found.' }, { status: 404 });
     }
 
     // 4. Idempotency Protection: If already confirmed/paid, return HTTP 200 immediately
-    if (existingPayment && ['CONFIRMED', 'SUCCESSFUL'].includes(existingPayment.status)) {
+    if (existingPayment && ['CONFIRMED', 'SUCCESSFUL', 'VERIFIED', 'SETTLED'].includes(existingPayment.status)) {
       console.log(`[Flutterwave Webhook] Idempotent skip: Transaction ${transactionId} (tx_ref: ${txRef}) is already confirmed.`);
+      await execute("UPDATE webhook_events SET status = 'PROCESSED', processed_at = datetime('now') WHERE id = ?", [webhookEventId]);
       return NextResponse.json({ status: 'already_processed', message: 'Payment previously verified.' }, { status: 200 });
     }
 
     if (invoice.status === 'PAID') {
       console.log(`[Flutterwave Webhook] Idempotent skip: Invoice ${invoice.invoice_number} is already paid in full.`);
+      await execute("UPDATE webhook_events SET status = 'PROCESSED', processed_at = datetime('now') WHERE id = ?", [webhookEventId]);
       return NextResponse.json({ status: 'already_processed', message: 'Invoice already marked PAID.' }, { status: 200 });
     }
 
     // 5. Verification Integrity Checks: Currency & Amount Matching
     if (verifyData.currency.toUpperCase() !== invoice.currency.toUpperCase()) {
       console.error(`[Flutterwave Webhook] Currency mismatch: Invoice expects ${invoice.currency}, Flutterwave transaction was ${verifyData.currency}`);
+      await execute("UPDATE webhook_events SET status = 'FAILED', error_message = 'Currency mismatch' WHERE id = ?", [webhookEventId]);
       return NextResponse.json({
         error: `Currency mismatch: Expected ${invoice.currency}, received ${verifyData.currency}.`,
       }, { status: 400 });
     }
 
-    // Amount validation in integer minor units
     const verifiedAmountMinor = Math.round(Number(verifyData.amount) * 100);
     if (verifiedAmountMinor <= 0) {
       return NextResponse.json({ error: 'Invalid transaction amount.' }, { status: 400 });
@@ -235,6 +284,7 @@ export async function POST(req: NextRequest) {
     // Reject overpayments safely
     if (verifiedAmountMinor > unpaidOutstandingMinor) {
       console.error(`[Flutterwave Webhook] Overpayment rejected: Paid amount (${verifiedAmountMinor} minor) exceeds remaining balance (${unpaidOutstandingMinor} minor) for invoice ${invoice.id}.`);
+      await execute("UPDATE webhook_events SET status = 'FAILED', error_message = 'Overpayment rejected' WHERE id = ?", [webhookEventId]);
       return NextResponse.json({
         error: `Overpayment violation: Paid amount exceeds outstanding balance. Expected at most ${unpaidOutstandingMinor / 100} ${invoice.currency}.`,
       }, { status: 400 });
@@ -245,17 +295,17 @@ export async function POST(req: NextRequest) {
     const isFullyPaid = newTotalPaidMinor >= invoiceTotalMinor;
     const newInvoiceStatus = isFullyPaid ? 'PAID' : 'PARTIALLY_PAID';
 
-    // Gateway Fee and Settlement calculations (From Authoritative Flutterwave Response)
+    // Gateway Fee and Settlement calculations
     const gatewayFeeMinor = Math.round(Number(verifyData.app_fee || 0) * 100);
     const netAmountMinor = verifyData.amount_settled
       ? Math.round(Number(verifyData.amount_settled) * 100)
       : Math.max(0, verifiedAmountMinor - gatewayFeeMinor);
 
+    // Hardened distinction: VERIFIED vs SETTLED
     const settlementStatus = verifyData.amount_settled ? 'SETTLED' : 'PENDING';
     const settlementCurrency = verifyData.currency;
     const settlementAmountMinor = verifyData.amount_settled ? Math.round(Number(verifyData.amount_settled) * 100) : null;
 
-    // Authoritative Payment Method mapping
     let paymentMethod = 'FLUTTERWAVE';
     if (verifyData.payment_type) {
       const pt = verifyData.payment_type.toLowerCase();
@@ -278,11 +328,10 @@ export async function POST(req: NextRequest) {
 
     const paymentId = existingPayment?.id || `pay_flw_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
     const now = new Date().toISOString();
-    let queuedPayoutResult: any = null;
 
     // 6. Atomic Database State Transition
     await transaction(async (tx) => {
-      // (a) Upsert confirmed Payment record
+      // (a) Upsert confirmed Payment record: payout_status is strictly RESERVED
       if (existingPayment) {
         await tx.execute(`
           UPDATE payments
@@ -297,6 +346,7 @@ export async function POST(req: NextRequest) {
               settlement_status = ?,
               settlement_currency = ?,
               settlement_amount_minor = ?,
+              payout_status = 'RESERVED',
               settlement_destination = 'Configured Flutterwave Merchant Settlement',
               metadata_json = ?,
               paid_at = ?,
@@ -326,10 +376,10 @@ export async function POST(req: NextRequest) {
             verification_source, status, reference, gateway, gateway_transaction_id,
             gateway_reference, gross_amount_minor, gateway_fee_minor, net_amount_minor,
             settlement_status, settlement_currency, settlement_amount_minor,
-            settlement_destination, metadata_json, paid_at, verified_at, verified_by,
+            settlement_destination, payout_status, metadata_json, paid_at, verified_at, verified_by,
             verification_notes, created_at
           )
-          VALUES (?, ?, ?, ?, ?, ?, 'FLUTTERWAVE_WEBHOOK', 'CONFIRMED', ?, 'flutterwave', ?, ?, ?, ?, ?, ?, ?, ?, 'Configured Flutterwave Merchant Settlement', ?, ?, ?, 'system_flutterwave', 'Verified authoritatively via Flutterwave Webhook', datetime('now'))
+          VALUES (?, ?, ?, ?, ?, ?, 'FLUTTERWAVE_WEBHOOK', 'CONFIRMED', ?, 'flutterwave', ?, ?, ?, ?, ?, ?, ?, ?, 'Configured Flutterwave Merchant Settlement', 'RESERVED', ?, ?, ?, 'system_flutterwave', 'Verified authoritatively via Flutterwave Webhook', datetime('now'))
         `, [
           paymentId,
           invoice.id,
@@ -392,7 +442,6 @@ export async function POST(req: NextRequest) {
           }
         }
       } else if (isFullyPaid) {
-        // Direct project advance if project was awaiting payment
         const project = await tx.queryOne<any>('SELECT status FROM projects WHERE id = ?', [invoice.project_id]);
         if (project?.status === 'AWAITING_PAYMENT') {
           await tx.execute(`
@@ -406,7 +455,7 @@ export async function POST(req: NextRequest) {
         }
       }
 
-      // (d) Record Immutable Double-Entry Ledger Entry: Debit BUSINESS_CASH, Credit CLIENT_RECEIVABLE
+      // (d) Record Immutable Double-Entry Ledger Entry: Debit GATEWAY_BALANCE, Credit CLIENT_FUNDS_LIABILITY
       await recordPaymentLedgerEntry(tx, {
         paymentId,
         invoiceId: invoice.id,
@@ -418,12 +467,12 @@ export async function POST(req: NextRequest) {
         reference: txRef,
       });
 
-      // (e) Partner Commission Calculation & Payout Queueing (Strictly on Service Revenue, Math.floor)
+      // (e) Partner Commission Calculation: Preserves 20% rate; Payout in NOT_ELIGIBLE status (NO AUTO-DISBURSEMENT)
       const project = await tx.queryOne<any>('SELECT representative_id FROM projects WHERE id = ?', [invoice.project_id]);
       const repId = project?.representative_id || invoice.representative_id;
 
       if (repId) {
-        queuedPayoutResult = await recordCommissionAndQueuePayout(tx, {
+        await recordCommissionAndQueuePayout(tx, {
           invoice,
           paymentId,
           verifiedPaymentAmountMinor: verifiedAmountMinor,
@@ -433,12 +482,8 @@ export async function POST(req: NextRequest) {
       }
     });
 
-    // 6b. Asynchronously Process Queued Payout (Completely Outside the DB Transaction!)
-    if (queuedPayoutResult?.payoutId) {
-      executeQueuedPayoutAsync(queuedPayoutResult.payoutId).catch((payoutErr) => {
-        console.error('[Flutterwave Webhook] Asynchronous payout execution error:', payoutErr);
-      });
-    }
+    // NOTE: Decoupled payout architecture: NO executeQueuedPayoutAsync is called here!
+    // Payouts remain strictly locked in RESERVED / NOT_ELIGIBLE until milestone clearance.
 
     // 7. Audit Logging
     await recordAuditLog({
@@ -461,23 +506,10 @@ export async function POST(req: NextRequest) {
       ipAddress: req.headers.get('x-forwarded-for') || '127.0.0.1',
     });
 
-    if (isFullyPaid) {
-      await recordAuditLog({
-        userId: 'system_flutterwave',
-        action: 'INVOICE_MARKED_PAID',
-        entity: 'invoices',
-        entityId: invoice.id,
-        metadata: {
-          invoiceNumber: invoice.invoice_number,
-          paymentId,
-          amountPaidMinor: newTotalPaidMinor,
-          currency: invoice.currency,
-        },
-        ipAddress: req.headers.get('x-forwarded-for') || '127.0.0.1',
-      });
-    }
+    // 8. Mark webhook_events record as PROCESSED
+    await execute("UPDATE webhook_events SET status = 'PROCESSED', processed_at = datetime('now') WHERE id = ?", [webhookEventId]);
 
-    // 8. Automated Non-blocking Email and In-App Notification Dispatch
+    // 9. Automated Non-blocking Email and In-App Notification Dispatch
     try {
       const client = await queryOne<any>(`
         SELECT c.id, c.company_name, u.id as user_id, u.email, up.first_name, up.last_name
@@ -505,7 +537,6 @@ export async function POST(req: NextRequest) {
         });
       }
     } catch (notifErr: any) {
-      // Notification errors are logged but MUST NOT disrupt confirmed payment
       console.error('[Flutterwave Webhook] Notification dispatch error (non-fatal):', notifErr.message);
     }
 
@@ -519,6 +550,9 @@ export async function POST(req: NextRequest) {
     }, { status: 200 });
   } catch (err: any) {
     console.error('[Flutterwave Webhook] Fatal processing error:', err);
+    if (webhookEventId) {
+      await execute("UPDATE webhook_events SET status = 'FAILED', error_message = ? WHERE id = ?", [err.message || 'Fatal error', webhookEventId]).catch(() => {});
+    }
     return NextResponse.json({ error: 'Webhook processing error.' }, { status: 500 });
   }
 }

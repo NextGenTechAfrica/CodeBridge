@@ -45,17 +45,22 @@ export async function sendPaymentConfirmationNotification(
 
     // 1. If external transactional email API is configured (e.g., Resend)
     if (process.env.RESEND_API_KEY) {
-      try {
-        const res = await fetch('https://api.resend.com/emails', {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            from: process.env.EMAIL_FROM || 'CodeBridge Billing <billing@code-bridge-rosy.vercel.app>',
-            to: params.recipientEmail,
-            subject: `Payment Confirmed: Invoice ${params.invoiceNumber} (${params.currency} ${majorAmount})`,
+      const fromEmail = process.env.EMAIL_FROM;
+      if (!fromEmail) {
+        console.warn('[Notification] EMAIL_FROM environment variable is not configured. Falling back to simulated notification.');
+        status = 'SIMULATED';
+      } else {
+        try {
+          const res = await fetch('https://api.resend.com/emails', {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              from: fromEmail,
+              to: params.recipientEmail,
+              subject: `Payment Confirmed: Invoice ${params.invoiceNumber} (${params.currency} ${majorAmount})`,
             html: `
               <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; color: #1e293b;">
                 <div style="background-color: #0f172a; padding: 20px; border-radius: 8px; color: white; margin-bottom: 24px;">
@@ -81,9 +86,10 @@ export async function sendPaymentConfirmationNotification(
           providerMessageId = resData.id;
           status = 'SENT';
         }
-      } catch (e: any) {
-        console.error('[Notification] Resend API dispatch error:', e.message);
-        status = 'FAILED';
+        } catch (e: any) {
+          console.error('[Notification] Resend API dispatch error:', e.message);
+          status = 'FAILED';
+        }
       }
     } else {
       console.log(`[Notification Simulator] Dispatched payment confirmation email to ${params.recipientEmail} (${params.currency} ${majorAmount})`);

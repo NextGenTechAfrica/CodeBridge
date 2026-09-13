@@ -54,7 +54,7 @@ export default function AboutPage() {
     {
       icon: Building2,
       title: 'Institutional Corporate Governance',
-      desc: 'CodeBridge is operated and backed by MarketBridge NG LTD. Commercial covenants, non-disclosure agreements, IP assignments, and service level warranties are backed by verified corporate governance and regulatory compliance.',
+      desc: 'CodeBridge is a technology delivery platform under NextGen Tech. By combining structured governance with agile, vetted engineering squads, CodeBridge delivers the reliability of a tier-1 consultancy.',
       highlights: [
         'Legally binding service level agreements (SLAs)',
         'Full intellectual property transfer upon final settlement',
@@ -133,7 +133,7 @@ export default function AboutPage() {
               maxWidth: '740px',
               margin: '0 auto 24px',
             }}>
-              CodeBridge is a digital product and technology solutions firm operated by <strong>MarketBridge NG LTD</strong>, helping businesses design, build, deploy, and improve custom digital products and business software.
+              CodeBridge is a technology delivery platform under NextGen Tech, built to help businesses and individuals access reliable digital solutions without the complexity of managing technology delivery alone.
             </motion.p>
             </motion.div>
           </div>
@@ -174,13 +174,13 @@ export default function AboutPage() {
                     Institutional Backing
                   </div>
                   <h2 style={{ fontSize: '24px', fontWeight: 800, color: 'var(--cb-text-primary)', letterSpacing: '-0.02em' }}>
-                    Corporate Governance: MarketBridge NG LTD
+                    Corporate Governance
                   </h2>
                 </div>
               </div>
 
               <p style={{ fontSize: '15px', color: 'var(--cb-text-secondary)', lineHeight: 1.7, marginBottom: '28px', maxWidth: '840px' }}>
-                CodeBridge is built and owned by <strong>MarketBridge NG LTD</strong> as its flagship technology and digital-products business platform. By combining institutional governance with agile, vetted engineering squads, CodeBridge delivers the reliability of a tier-1 consultancy with the speed and capital efficiency of an elite product studio.
+                CodeBridge is a technology delivery platform under NextGen Tech, with its technology, infrastructure and platform development managed by NextGen Tech’s Technical Department. By combining structured governance with agile, vetted engineering squads, CodeBridge delivers the reliability of a tier-1 consultancy with the speed and capital efficiency of an elite product studio.
               </p>
 
               {/* Visual Governance Hierarchy Card */}
@@ -203,13 +203,13 @@ export default function AboutPage() {
                     boxShadow: 'var(--cb-shadow-sm)',
                   }}>
                     <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--cb-text-muted)', textTransform: 'uppercase', marginBottom: '6px' }}>
-                      Parent Organization
+                      Technology Ecosystem
                     </div>
                     <div style={{ fontSize: '16px', fontWeight: 800, color: 'var(--cb-text-primary)', marginBottom: '4px' }}>
-                      MarketBridge NG LTD
+                      NextGen Tech
                     </div>
                     <div style={{ fontSize: '13px', color: 'var(--cb-text-secondary)' }}>
-                      Corporate Governance, Legal Frameworks &amp; Milestone Escrow Security
+                      Project Governance, Legal Frameworks &amp; Milestone Security
                     </div>
                   </div>
 

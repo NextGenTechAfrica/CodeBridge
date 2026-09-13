@@ -159,9 +159,14 @@ export function verifyWebhookSignature(
   // 2. Validate flutterwave-signature (HMAC-SHA256 signature of raw request body)
   if (flwSignature && rawBody) {
     const candidateKeys = [...secretHashes, secretKey, process.env.FLW_SECRET_KEY].filter(Boolean) as string[];
+    const cleanSignature = flwSignature.trim();
     for (const key of candidateKeys) {
-      const computedSignature = crypto.createHmac('sha256', key).update(rawBody).digest('hex');
-      if (timingSafeEqual(flwSignature.toLowerCase(), computedSignature.toLowerCase())) {
+      const computedHex = crypto.createHmac('sha256', key).update(rawBody).digest('hex');
+      const computedBase64 = crypto.createHmac('sha256', key).update(rawBody).digest('base64');
+      if (
+        timingSafeEqual(cleanSignature, computedBase64) ||
+        timingSafeEqual(cleanSignature.toLowerCase(), computedHex.toLowerCase())
+      ) {
         return true;
       }
     }
