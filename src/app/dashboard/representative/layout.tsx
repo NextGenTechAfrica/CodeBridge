@@ -234,7 +234,7 @@ function RepresentativeLayoutContent({ children }: { children: React.ReactNode }
                   padding: '0 12px 8px 12px',
                 }}
               >
-                CRM Navigation
+                Navigation
               </div>
             )}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>

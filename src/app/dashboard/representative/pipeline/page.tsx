@@ -279,17 +279,17 @@ export default function RepresentativePipelinePage() {
               <Sparkles size={13} />
               How Client Deals Work • 20% Commission on Every Paid Milestone
             </div>
-            <h1
+            <h2
               style={{
-                fontSize: '22px',
+                fontSize: '20px',
                 fontWeight: 800,
                 color: 'var(--cb-text-primary)',
                 letterSpacing: '-0.02em',
                 margin: '0 0 6px 0',
               }}
             >
-              Deal Progress
-            </h1>
+              How Client Deals Move
+            </h2>
             <p
               style={{
                 fontSize: '13px',
@@ -345,7 +345,7 @@ export default function RepresentativePipelinePage() {
               }}
             >
               <Plus size={16} />
-              + Add Client
+              Add Client
             </button>
           </div>
         </div>
@@ -534,67 +534,52 @@ export default function RepresentativePipelinePage() {
           {/* Actual Bars Visualization */}
           <div
             style={{
-              height: '180px',
-              display: 'flex',
-              alignItems: 'flex-end',
-              justifyContent: 'space-between',
-              gap: '12px',
-              padding: '0 8px',
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(80px, 1fr))',
+              gap: '10px',
+              padding: '10px 0',
             }}
           >
             {[
-              { label: '1. New Client', count: stageCounts.newClient, color: '#3B82F6' },
-              { label: '2. Contacted', count: stageCounts.contacted, color: '#06B6D4' },
-              { label: '3. Planning Scope', count: stageCounts.qualified, color: '#8B5CF6' },
-              { label: '4. Proposal Sent', count: stageCounts.proposal, color: '#F59E0B' },
-              { label: '5. Deal Won', count: stageCounts.won, color: '#10B981' },
+              { label: '1. New Client', count: stageCounts.newClient, color: '#3B82F6', bgColor: 'rgba(59, 130, 246, 0.1)' },
+              { label: '2. Contacted', count: stageCounts.contacted, color: '#06B6D4', bgColor: 'rgba(6, 182, 212, 0.1)' },
+              { label: '3. Planning Scope', count: stageCounts.qualified, color: '#8B5CF6', bgColor: 'rgba(139, 92, 246, 0.1)' },
+              { label: '4. Proposal Sent', count: stageCounts.proposal, color: '#F59E0B', bgColor: 'rgba(245, 158, 11, 0.1)' },
+              { label: '5. Deal Won', count: stageCounts.won, color: '#10B981', bgColor: 'rgba(16, 185, 129, 0.1)' },
             ].map((stage, idx) => {
-              // Bar height is strictly based on actual data
-              const heightPercent =
-                maxStageCount > 0 ? Math.max(12, Math.round((stage.count / maxStageCount) * 100)) : 6;
-
+              const hasClients = stage.count > 0;
               return (
                 <div
                   key={idx}
                   style={{
-                    flex: 1,
+                    backgroundColor: hasClients ? stage.bgColor : 'var(--cb-bg-subtle)',
+                    border: hasClients ? `1.5px solid ${stage.color}` : '1px solid var(--cb-border-subtle)',
+                    borderRadius: '12px',
+                    padding: '16px 8px',
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
-                    height: '100%',
-                    justifyContent: 'flex-end',
+                    justifyContent: 'center',
+                    textAlign: 'center',
+                    transition: 'all 0.15s ease',
                   }}
                 >
                   <div
                     style={{
-                      fontSize: '13px',
-                      fontWeight: 800,
-                      color: stage.count > 0 ? stage.color : 'var(--cb-text-muted)',
-                      marginBottom: '6px',
+                      fontSize: '24px',
+                      fontWeight: 900,
+                      color: hasClients ? stage.color : 'var(--cb-text-muted)',
+                      lineHeight: 1,
+                      marginBottom: '8px',
                     }}
                   >
                     {stage.count}
                   </div>
-
                   <div
                     style={{
-                      width: '100%',
-                      maxWidth: '48px',
-                      height: `${heightPercent}%`,
-                      borderRadius: '6px 6px 0 0',
-                      backgroundColor: stage.count > 0 ? stage.color : 'var(--cb-bg-subtle)',
-                      borderTop: stage.count > 0 ? `2px solid ${stage.color}` : '1px dashed var(--cb-border-subtle)',
-                      transition: 'height 0.3s ease',
-                    }}
-                  />
-
-                  <div
-                    style={{
-                      marginTop: '10px',
                       fontSize: '11px',
-                      fontWeight: 600,
-                      color: stage.count > 0 ? 'var(--cb-text-primary)' : 'var(--cb-text-secondary)',
-                      textAlign: 'center',
+                      fontWeight: 700,
+                      color: hasClients ? 'var(--cb-text-primary)' : 'var(--cb-text-secondary)',
                       lineHeight: 1.2,
                     }}
                   >
