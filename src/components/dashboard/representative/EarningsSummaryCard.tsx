@@ -38,11 +38,11 @@ export default function EarningsSummaryCard({ financialSummary, payoutSettings }
     <div
       id="earnings-summary-card"
       style={{
-        backgroundColor: '#FFFFFF',
+        backgroundColor: 'var(--cb-bg-card)',
         borderRadius: '16px',
         padding: '24px',
-        border: '1px solid #E2E8F0',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+        border: '1px solid var(--cb-border-subtle)',
+        boxShadow: 'var(--cb-shadow-sm, 0 1px 3px rgba(0,0,0,0.02))',
         marginBottom: '24px',
       }}
     >
@@ -52,7 +52,7 @@ export default function EarningsSummaryCard({ financialSummary, payoutSettings }
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          borderBottom: '1px solid #F1F5F9',
+          borderBottom: '1px solid var(--cb-border-subtle)',
           paddingBottom: '18px',
           marginBottom: '20px',
           flexWrap: 'wrap',
@@ -60,10 +60,10 @@ export default function EarningsSummaryCard({ financialSummary, payoutSettings }
         }}
       >
         <div>
-          <h2 style={{ fontSize: '17px', fontWeight: 800, color: '#0F172A', margin: 0 }}>
+          <h2 style={{ fontSize: '17px', fontWeight: 800, color: 'var(--cb-text-primary)', margin: 0 }}>
             Earnings & Commission Summary
           </h2>
-          <p style={{ fontSize: '12px', color: '#64748B', margin: '3px 0 0 0' }}>
+          <p style={{ fontSize: '12px', color: 'var(--cb-text-secondary)', margin: '3px 0 0 0' }}>
             Double-entry financial ledger verified accruals and disbursements ({currency})
           </p>
         </div>
@@ -77,8 +77,8 @@ export default function EarningsSummaryCard({ financialSummary, payoutSettings }
               fontSize: '12px',
               fontWeight: 700,
               color: '#059669',
-              backgroundColor: '#ECFDF5',
-              border: '1px solid #A7F3D0',
+              backgroundColor: 'rgba(5, 150, 105, 0.1)',
+              border: '1px solid rgba(5, 150, 105, 0.25)',
               padding: '4px 10px',
               borderRadius: '8px',
             }}
@@ -89,9 +89,9 @@ export default function EarningsSummaryCard({ financialSummary, payoutSettings }
             style={{
               fontSize: '12px',
               fontWeight: 600,
-              color: '#64748B',
-              backgroundColor: '#F8FAFC',
-              border: '1px solid #E2E8F0',
+              color: 'var(--cb-text-secondary)',
+              backgroundColor: 'var(--cb-bg-subtle)',
+              border: '1px solid var(--cb-border-subtle)',
               padding: '4px 10px',
               borderRadius: '8px',
             }}
@@ -117,10 +117,10 @@ export default function EarningsSummaryCard({ financialSummary, payoutSettings }
         {/* 1. Net Payable Hero */}
         <div
           style={{
-            backgroundColor: '#EFF6FF',
+            backgroundColor: 'rgba(37, 99, 235, 0.08)',
             borderRadius: '14px',
             padding: '18px',
-            border: '1px solid #BFDBFE',
+            border: '1px solid rgba(37, 99, 235, 0.25)',
           }}
         >
           <div
@@ -134,7 +134,7 @@ export default function EarningsSummaryCard({ financialSummary, payoutSettings }
           >
             Net Payable to You
           </div>
-          <div style={{ fontSize: '26px', fontWeight: 800, color: '#1D4ED8', marginTop: '6px', lineHeight: 1.1 }}>
+          <div style={{ fontSize: '26px', fontWeight: 800, color: 'var(--cb-text-primary)', marginTop: '6px', lineHeight: 1.1 }}>
             {currency} {netPayableFormatted}
           </div>
           <div style={{ fontSize: '11px', color: '#2563EB', marginTop: '6px', fontWeight: 600 }}>
@@ -145,16 +145,16 @@ export default function EarningsSummaryCard({ financialSummary, payoutSettings }
         {/* 2. Total Earned (Gross) */}
         <div
           style={{
-            backgroundColor: '#F8FAFC',
+            backgroundColor: 'var(--cb-bg-surface)',
             borderRadius: '14px',
             padding: '18px',
-            border: '1px solid #E2E8F0',
+            border: '1px solid var(--cb-border-subtle)',
           }}
         >
-          <div style={{ fontSize: '11px', fontWeight: 600, color: '#64748B', textTransform: 'uppercase' }}>
+          <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--cb-text-secondary)', textTransform: 'uppercase' }}>
             Total Earned (Gross)
           </div>
-          <div style={{ fontSize: '22px', fontWeight: 800, color: '#0F172A', marginTop: '6px', lineHeight: 1.1 }}>
+          <div style={{ fontSize: '22px', fontWeight: 800, color: 'var(--cb-text-primary)', marginTop: '6px', lineHeight: 1.1 }}>
             {currency} {totalEarnedFormatted}
           </div>
           <div style={{ fontSize: '11px', color: '#059669', marginTop: '6px', fontWeight: 600 }}>
@@ -165,19 +165,19 @@ export default function EarningsSummaryCard({ financialSummary, payoutSettings }
         {/* 3. Total Paid */}
         <div
           style={{
-            backgroundColor: '#F8FAFC',
+            backgroundColor: 'var(--cb-bg-surface)',
             borderRadius: '14px',
             padding: '18px',
-            border: '1px solid #E2E8F0',
+            border: '1px solid var(--cb-border-subtle)',
           }}
         >
-          <div style={{ fontSize: '11px', fontWeight: 600, color: '#64748B', textTransform: 'uppercase' }}>
+          <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--cb-text-secondary)', textTransform: 'uppercase' }}>
             Total Paid
           </div>
-          <div style={{ fontSize: '22px', fontWeight: 800, color: '#0F172A', marginTop: '6px', lineHeight: 1.1 }}>
+          <div style={{ fontSize: '22px', fontWeight: 800, color: 'var(--cb-text-primary)', marginTop: '6px', lineHeight: 1.1 }}>
             {currency} {totalPaidFormatted}
           </div>
-          <div style={{ fontSize: '11px', color: '#64748B', marginTop: '6px' }}>
+          <div style={{ fontSize: '11px', color: 'var(--cb-text-muted)', marginTop: '6px' }}>
             Completed transfers
           </div>
         </div>
@@ -185,27 +185,27 @@ export default function EarningsSummaryCard({ financialSummary, payoutSettings }
         {/* 4. Pending Commission */}
         <div
           style={{
-            backgroundColor: '#F8FAFC',
+            backgroundColor: 'var(--cb-bg-surface)',
             borderRadius: '14px',
             padding: '18px',
-            border: '1px solid #E2E8F0',
+            border: '1px solid var(--cb-border-subtle)',
           }}
         >
-          <div style={{ fontSize: '11px', fontWeight: 600, color: '#64748B', textTransform: 'uppercase' }}>
+          <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--cb-text-secondary)', textTransform: 'uppercase' }}>
             Pending Commission
           </div>
           <div
             style={{
               fontSize: '22px',
               fontWeight: 800,
-              color: pendingMinor > 0 ? '#D97706' : '#64748B',
+              color: pendingMinor > 0 ? '#D97706' : 'var(--cb-text-primary)',
               marginTop: '6px',
               lineHeight: 1.1,
             }}
           >
             {currency} {pendingFormatted}
           </div>
-          <div style={{ fontSize: '11px', color: '#64748B', marginTop: '6px' }}>
+          <div style={{ fontSize: '11px', color: 'var(--cb-text-muted)', marginTop: '6px' }}>
             Awaiting client settlement
           </div>
         </div>
@@ -213,13 +213,13 @@ export default function EarningsSummaryCard({ financialSummary, payoutSettings }
         {/* 5. Recovery Obligations */}
         <div
           style={{
-            backgroundColor: '#F8FAFC',
+            backgroundColor: 'var(--cb-bg-surface)',
             borderRadius: '14px',
             padding: '18px',
-            border: '1px solid #E2E8F0',
+            border: '1px solid var(--cb-border-subtle)',
           }}
         >
-          <div style={{ fontSize: '11px', fontWeight: 600, color: '#64748B', textTransform: 'uppercase' }}>
+          <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--cb-text-secondary)', textTransform: 'uppercase' }}>
             Recovery Obligations
           </div>
           <div

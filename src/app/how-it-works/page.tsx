@@ -369,7 +369,7 @@ export default function HowItWorksPage() {
                       whiteSpace: 'nowrap',
                     }}
                   >
-                    <span>Continue with Google</span>
+                    <span style={{ color: '#FFFFFF' }}>Become a Representative</span>
                     <ArrowRight size={16} />
                   </Link>
                 </div>

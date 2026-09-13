@@ -109,10 +109,10 @@ export default function RepresentativePerformancePage() {
       {/* ========================================================================= */}
       <div
         style={{
-          backgroundColor: '#FFFFFF',
+          backgroundColor: 'var(--cb-bg-card)',
           borderRadius: '16px',
-          border: '1px solid #E2E8F0',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+          border: '1px solid var(--cb-border-subtle)',
+          boxShadow: 'var(--cb-shadow-sm, 0 1px 3px rgba(0,0,0,0.02))',
           overflow: 'hidden',
           marginBottom: '32px',
         }}
@@ -121,7 +121,7 @@ export default function RepresentativePerformancePage() {
         <div
           style={{
             padding: '20px 24px',
-            borderBottom: '1px solid #F1F5F9',
+            borderBottom: '1px solid var(--cb-border-subtle)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -130,10 +130,10 @@ export default function RepresentativePerformancePage() {
           }}
         >
           <div>
-            <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#0F172A', margin: 0 }}>
+            <h3 style={{ fontSize: '16px', fontWeight: 800, color: 'var(--cb-text-primary)', margin: 0 }}>
               Your Results & Earnings
             </h3>
-            <p style={{ fontSize: '12px', color: '#64748B', margin: '3px 0 0 0' }}>
+            <p style={{ fontSize: '12px', color: 'var(--cb-text-secondary)', margin: '3px 0 0 0' }}>
               Client proposals, milestone billing invoices, and transaction history
             </p>
           </div>
@@ -142,7 +142,7 @@ export default function RepresentativePerformancePage() {
           <div
             style={{
               display: 'flex',
-              backgroundColor: '#F1F5F9',
+              backgroundColor: 'var(--cb-bg-subtle)',
               padding: '4px',
               borderRadius: '10px',
               gap: '4px',
@@ -159,8 +159,8 @@ export default function RepresentativePerformancePage() {
                 border: 'none',
                 fontSize: '12px',
                 fontWeight: activeCommercialTab === 'proposals' ? 700 : 500,
-                backgroundColor: activeCommercialTab === 'proposals' ? '#FFFFFF' : 'transparent',
-                color: activeCommercialTab === 'proposals' ? '#0F172A' : '#64748B',
+                backgroundColor: activeCommercialTab === 'proposals' ? 'var(--cb-bg-card)' : 'transparent',
+                color: activeCommercialTab === 'proposals' ? 'var(--cb-text-primary)' : 'var(--cb-text-secondary)',
                 boxShadow: activeCommercialTab === 'proposals' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
                 cursor: 'pointer',
                 transition: 'all 0.15s ease',
@@ -181,8 +181,8 @@ export default function RepresentativePerformancePage() {
                 border: 'none',
                 fontSize: '12px',
                 fontWeight: activeCommercialTab === 'invoices' ? 700 : 500,
-                backgroundColor: activeCommercialTab === 'invoices' ? '#FFFFFF' : 'transparent',
-                color: activeCommercialTab === 'invoices' ? '#0F172A' : '#64748B',
+                backgroundColor: activeCommercialTab === 'invoices' ? 'var(--cb-bg-card)' : 'transparent',
+                color: activeCommercialTab === 'invoices' ? 'var(--cb-text-primary)' : 'var(--cb-text-secondary)',
                 boxShadow: activeCommercialTab === 'invoices' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
                 cursor: 'pointer',
                 transition: 'all 0.15s ease',
@@ -203,8 +203,8 @@ export default function RepresentativePerformancePage() {
                 border: 'none',
                 fontSize: '12px',
                 fontWeight: activeCommercialTab === 'ledger' ? 700 : 500,
-                backgroundColor: activeCommercialTab === 'ledger' ? '#FFFFFF' : 'transparent',
-                color: activeCommercialTab === 'ledger' ? '#0F172A' : '#64748B',
+                backgroundColor: activeCommercialTab === 'ledger' ? 'var(--cb-bg-card)' : 'transparent',
+                color: activeCommercialTab === 'ledger' ? 'var(--cb-text-primary)' : 'var(--cb-text-secondary)',
                 boxShadow: activeCommercialTab === 'ledger' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
                 cursor: 'pointer',
                 transition: 'all 0.15s ease',
@@ -220,14 +220,14 @@ export default function RepresentativePerformancePage() {
         {activeCommercialTab === 'proposals' && (
           <div>
             {proposals.length === 0 ? (
-              <div style={{ padding: '36px', textAlign: 'center', color: '#94A3B8', fontSize: '13px' }}>
+              <div style={{ padding: '36px', textAlign: 'center', color: 'var(--cb-text-muted)', fontSize: '13px' }}>
                 No commercial proposals sent yet. Qualified leads will generate proposals.
               </div>
             ) : (
               <div style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
                   <thead>
-                    <tr style={{ backgroundColor: '#F8FAFC', borderBottom: '1px solid #E2E8F0', color: '#64748B' }}>
+                    <tr style={{ backgroundColor: 'var(--cb-bg-surface)', borderBottom: '1px solid var(--cb-border-subtle)', color: 'var(--cb-text-secondary)' }}>
                       <th style={{ padding: '12px 20px' }}>Proposal Title</th>
                       <th style={{ padding: '12px 16px' }}>Client</th>
                       <th style={{ padding: '12px 16px' }}>Amount</th>
@@ -237,14 +237,14 @@ export default function RepresentativePerformancePage() {
                   </thead>
                   <tbody>
                     {proposals.map((p, idx) => (
-                      <tr key={p.id || idx} style={{ borderBottom: '1px solid #F1F5F9' }}>
-                        <td style={{ padding: '14px 20px', fontWeight: 700, color: '#0F172A' }}>
+                      <tr key={p.id || idx} style={{ borderBottom: '1px solid var(--cb-border-subtle)' }}>
+                        <td style={{ padding: '14px 20px', fontWeight: 700, color: 'var(--cb-text-primary)' }}>
                           {p.title || `Commercial Proposal #${idx + 1}`}
                         </td>
-                        <td style={{ padding: '14px 16px', color: '#475569' }}>
+                        <td style={{ padding: '14px 16px', color: 'var(--cb-text-secondary)' }}>
                           {p.client_company_name || p.client_id}
                         </td>
-                        <td style={{ padding: '14px 16px', fontWeight: 700, color: '#0F172A' }}>
+                        <td style={{ padding: '14px 16px', fontWeight: 700, color: 'var(--cb-text-primary)' }}>
                           {p.currency} {((Number(p.amount_minor) || 0) / 100).toLocaleString()}
                         </td>
                         <td style={{ padding: '14px 16px' }}>
@@ -254,14 +254,14 @@ export default function RepresentativePerformancePage() {
                               fontWeight: 700,
                               padding: '2px 8px',
                               borderRadius: '6px',
-                              backgroundColor: p.status === 'CLIENT_APPROVED' ? '#ECFDF5' : '#EFF6FF',
+                              backgroundColor: p.status === 'CLIENT_APPROVED' ? 'rgba(5, 150, 105, 0.1)' : 'rgba(37, 99, 235, 0.1)',
                               color: p.status === 'CLIENT_APPROVED' ? '#059669' : '#2563EB',
                             }}
                           >
                             {p.status}
                           </span>
                         </td>
-                        <td style={{ padding: '14px 20px', color: '#64748B', fontSize: '12px' }}>
+                        <td style={{ padding: '14px 20px', color: 'var(--cb-text-secondary)', fontSize: '12px' }}>
                           {p.created_at ? new Date(p.created_at).toLocaleDateString() : 'Active'}
                         </td>
                       </tr>
@@ -277,14 +277,14 @@ export default function RepresentativePerformancePage() {
         {activeCommercialTab === 'invoices' && (
           <div>
             {invoices.length === 0 ? (
-              <div style={{ padding: '36px', textAlign: 'center', color: '#94A3B8', fontSize: '13px' }}>
+              <div style={{ padding: '36px', textAlign: 'center', color: 'var(--cb-text-muted)', fontSize: '13px' }}>
                 No invoices issued for your client milestones yet.
               </div>
             ) : (
               <div style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
                   <thead>
-                    <tr style={{ backgroundColor: '#F8FAFC', borderBottom: '1px solid #E2E8F0', color: '#64748B' }}>
+                    <tr style={{ backgroundColor: 'var(--cb-bg-surface)', borderBottom: '1px solid var(--cb-border-subtle)', color: 'var(--cb-text-secondary)' }}>
                       <th style={{ padding: '12px 20px' }}>Invoice Number</th>
                       <th style={{ padding: '12px 16px' }}>Due Date</th>
                       <th style={{ padding: '12px 16px' }}>Amount</th>
@@ -294,14 +294,14 @@ export default function RepresentativePerformancePage() {
                   </thead>
                   <tbody>
                     {invoices.map((inv: any, idx) => (
-                      <tr key={inv.id || idx} style={{ borderBottom: '1px solid #F1F5F9' }}>
-                        <td style={{ padding: '14px 20px', fontWeight: 700, color: '#0F172A' }}>
+                      <tr key={inv.id || idx} style={{ borderBottom: '1px solid var(--cb-border-subtle)' }}>
+                        <td style={{ padding: '14px 20px', fontWeight: 700, color: 'var(--cb-text-primary)' }}>
                           {inv.invoice_number}
                         </td>
-                        <td style={{ padding: '14px 16px', color: '#64748B' }}>
+                        <td style={{ padding: '14px 16px', color: 'var(--cb-text-secondary)' }}>
                           {inv.due_date ? new Date(inv.due_date).toLocaleDateString() : 'Immediate'}
                         </td>
-                        <td style={{ padding: '14px 16px', fontWeight: 700, color: '#0F172A' }}>
+                        <td style={{ padding: '14px 16px', fontWeight: 700, color: 'var(--cb-text-primary)' }}>
                           {inv.currency} {((Number(inv.amount_minor) || 0) / 100).toLocaleString()}
                         </td>
                         <td style={{ padding: '14px 16px' }}>
@@ -311,14 +311,14 @@ export default function RepresentativePerformancePage() {
                               fontWeight: 700,
                               padding: '2px 8px',
                               borderRadius: '6px',
-                              backgroundColor: inv.status === 'PAID' ? '#ECFDF5' : '#FFFBEB',
+                              backgroundColor: inv.status === 'PAID' ? 'rgba(5, 150, 105, 0.1)' : 'rgba(217, 119, 6, 0.1)',
                               color: inv.status === 'PAID' ? '#059669' : '#D97706',
                             }}
                           >
                             {inv.status}
                           </span>
                         </td>
-                        <td style={{ padding: '14px 20px', color: '#64748B', fontSize: '12px' }}>
+                        <td style={{ padding: '14px 20px', color: 'var(--cb-text-secondary)', fontSize: '12px' }}>
                           {inv.status === 'PAID' ? 'Confirmed by Flutterwave' : 'Pending Client Settlement'}
                         </td>
                       </tr>
@@ -334,14 +334,14 @@ export default function RepresentativePerformancePage() {
         {activeCommercialTab === 'ledger' && (
           <div>
             {ledgerEntries.length === 0 ? (
-              <div style={{ padding: '36px', textAlign: 'center', color: '#94A3B8', fontSize: '13px' }}>
+              <div style={{ padding: '36px', textAlign: 'center', color: 'var(--cb-text-muted)', fontSize: '13px' }}>
                 No transactions recorded yet. Transactions are recorded upon invoice payment.
               </div>
             ) : (
               <div style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '12px' }}>
                   <thead>
-                    <tr style={{ backgroundColor: '#F8FAFC', borderBottom: '1px solid #E2E8F0', color: '#64748B' }}>
+                    <tr style={{ backgroundColor: 'var(--cb-bg-surface)', borderBottom: '1px solid var(--cb-border-subtle)', color: 'var(--cb-text-secondary)' }}>
                       <th style={{ padding: '10px 18px' }}>Date</th>
                       <th style={{ padding: '10px 14px' }}>Entry Type</th>
                       <th style={{ padding: '10px 14px' }}>Account Debited</th>
@@ -352,11 +352,11 @@ export default function RepresentativePerformancePage() {
                   </thead>
                   <tbody>
                     {ledgerEntries.map((entry, idx) => (
-                      <tr key={entry.id || idx} style={{ borderBottom: '1px solid #F1F5F9' }}>
-                        <td style={{ padding: '10px 18px', color: '#64748B' }}>
+                      <tr key={entry.id || idx} style={{ borderBottom: '1px solid var(--cb-border-subtle)' }}>
+                        <td style={{ padding: '10px 18px', color: 'var(--cb-text-secondary)' }}>
                           {new Date(entry.created_at).toLocaleDateString()}
                         </td>
-                        <td style={{ padding: '10px 14px', fontWeight: 700, color: '#0F172A' }}>
+                        <td style={{ padding: '10px 14px', fontWeight: 700, color: 'var(--cb-text-primary)' }}>
                           {entry.entry_type}
                         </td>
                         <td style={{ padding: '10px 14px', color: '#2563EB', fontWeight: 600 }}>
@@ -365,10 +365,10 @@ export default function RepresentativePerformancePage() {
                         <td style={{ padding: '10px 14px', color: '#059669', fontWeight: 600 }}>
                           {entry.account_credited}
                         </td>
-                        <td style={{ padding: '10px 14px', fontWeight: 800, color: '#0F172A' }}>
+                        <td style={{ padding: '10px 14px', fontWeight: 800, color: 'var(--cb-text-primary)' }}>
                           {entry.currency} {((Number(entry.amount_minor) || 0) / 100).toLocaleString()}
                         </td>
-                        <td style={{ padding: '10px 18px', color: '#94A3B8', fontFamily: 'monospace' }}>
+                        <td style={{ padding: '10px 18px', color: 'var(--cb-text-muted)', fontFamily: 'monospace' }}>
                           {entry.reference}
                         </td>
                       </tr>
@@ -386,11 +386,11 @@ export default function RepresentativePerformancePage() {
       {/* ========================================================================= */}
       <div
         style={{
-          backgroundColor: '#FFFFFF',
+          backgroundColor: 'var(--cb-bg-card)',
           borderRadius: '16px',
           padding: '24px',
-          border: '1px solid #E2E8F0',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+          border: '1px solid var(--cb-border-subtle)',
+          boxShadow: 'var(--cb-shadow-sm, 0 1px 3px rgba(0,0,0,0.02))',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
@@ -399,7 +399,7 @@ export default function RepresentativePerformancePage() {
               width: '36px',
               height: '36px',
               borderRadius: '10px',
-              backgroundColor: '#EFF6FF',
+              backgroundColor: 'rgba(37, 99, 235, 0.1)',
               color: '#2563EB',
               display: 'flex',
               alignItems: 'center',
@@ -409,10 +409,10 @@ export default function RepresentativePerformancePage() {
             <Wallet size={18} />
           </div>
           <div>
-            <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#0F172A', margin: 0 }}>
+            <h3 style={{ fontSize: '16px', fontWeight: 800, color: 'var(--cb-text-primary)', margin: 0 }}>
               Commission Payout Settings & Architecture
             </h3>
-            <p style={{ fontSize: '12px', color: '#64748B', margin: '2px 0 0 0' }}>
+            <p style={{ fontSize: '12px', color: 'var(--cb-text-secondary)', margin: '2px 0 0 0' }}>
               Automatic accruals at 20% on all verified client invoice payments
             </p>
           </div>
@@ -427,13 +427,13 @@ export default function RepresentativePerformancePage() {
         >
           <div
             style={{
-              backgroundColor: '#F8FAFC',
+              backgroundColor: 'var(--cb-bg-surface)',
               borderRadius: '12px',
               padding: '16px',
-              border: '1px solid #E2E8F0',
+              border: '1px solid var(--cb-border-subtle)',
             }}
           >
-            <div style={{ fontSize: '12px', color: '#64748B', fontWeight: 600 }}>Commission Rate</div>
+            <div style={{ fontSize: '12px', color: 'var(--cb-text-secondary)', fontWeight: 600 }}>Commission Rate</div>
             <div style={{ fontSize: '20px', fontWeight: 800, color: '#2563EB', marginTop: '4px' }}>
               20.0% Guaranteed
             </div>
@@ -445,38 +445,38 @@ export default function RepresentativePerformancePage() {
 
           <div
             style={{
-              backgroundColor: '#F8FAFC',
+              backgroundColor: 'var(--cb-bg-surface)',
               borderRadius: '12px',
               padding: '16px',
-              border: '1px solid #E2E8F0',
+              border: '1px solid var(--cb-border-subtle)',
             }}
           >
-            <div style={{ fontSize: '12px', color: '#64748B', fontWeight: 600 }}>Configured Payout Destination</div>
-            <div style={{ fontSize: '16px', fontWeight: 700, color: '#0F172A', marginTop: '4px' }}>
+            <div style={{ fontSize: '12px', color: 'var(--cb-text-secondary)', fontWeight: 600 }}>Configured Payout Destination</div>
+            <div style={{ fontSize: '16px', fontWeight: 700, color: 'var(--cb-text-primary)', marginTop: '4px' }}>
               {payoutSettings.destination
                 ? `${payoutSettings.method === 'MPESA' ? 'M-Pesa' : 'Bank'} (${payoutSettings.destination})`
                 : currency === 'KES'
                 ? 'M-Pesa Payout Destination'
                 : 'Bank Payout Destination'}
             </div>
-            <div style={{ fontSize: '11px', color: '#64748B', marginTop: '6px' }}>
+            <div style={{ fontSize: '11px', color: 'var(--cb-text-secondary)', marginTop: '6px' }}>
               Settlement currency: {payoutSettings.currency || currency}
             </div>
           </div>
 
           <div
             style={{
-              backgroundColor: '#F8FAFC',
+              backgroundColor: 'var(--cb-bg-surface)',
               borderRadius: '12px',
               padding: '16px',
-              border: '1px solid #E2E8F0',
+              border: '1px solid var(--cb-border-subtle)',
             }}
           >
-            <div style={{ fontSize: '12px', color: '#64748B', fontWeight: 600 }}>Accounting Ledger Engine</div>
-            <div style={{ fontSize: '16px', fontWeight: 700, color: '#0F172A', marginTop: '4px' }}>
+            <div style={{ fontSize: '12px', color: 'var(--cb-text-secondary)', fontWeight: 600 }}>Accounting Ledger Engine</div>
+            <div style={{ fontSize: '16px', fontWeight: 700, color: 'var(--cb-text-primary)', marginTop: '4px' }}>
               Balanced Double-Entry
             </div>
-            <div style={{ fontSize: '11px', color: '#64748B', marginTop: '6px' }}>
+            <div style={{ fontSize: '11px', color: 'var(--cb-text-secondary)', marginTop: '6px' }}>
               Immutable transaction records & verified audits
             </div>
           </div>

@@ -311,7 +311,7 @@ select option {
 
 .cb-btn-outline-pill {
   background-color: var(--cb-bg-card);
-  color: var(--cb-text-primary) !important;
+  color: var(--cb-text-primary);
   border: 1px solid var(--cb-border-subtle);
   border-radius: var(--cb-radius-full);
   font-weight: 500;
@@ -321,6 +321,60 @@ select option {
 .cb-btn-outline-pill:hover {
   background-color: var(--cb-bg-subtle);
   border-color: var(--cb-border-light);
+}
+
+.cb-btn-outline-light {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  color: #FFFFFF !important;
+  border-radius: var(--cb-radius-full);
+  font-weight: 600;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cb-btn-outline-light:hover {
+  background-color: rgba(255, 255, 255, 0.16) !important;
+  border-color: rgba(255, 255, 255, 0.5) !important;
+  color: #FFFFFF !important;
+}
+
+.cb-btn-outline-light,
+.cb-btn-outline-light *,
+.cb-btn-outline-light span,
+.cb-btn-outline-light a,
+.cb-btn-outline-light svg {
+  color: #FFFFFF !important;
+}
+
+/* Fallback protection for any outline buttons rendered on dark gradient sections */
+[style*="var(--cb-navy-950)"] .cb-btn-outline-pill,
+[style*="var(--cb-navy-900)"] .cb-btn-outline-pill,
+[style*="var(--cb-navy-800)"] .cb-btn-outline-pill,
+[style*="#0B1B3D"] .cb-btn-outline-pill,
+[style*="#070F26"] .cb-btn-outline-pill {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(255, 255, 255, 0.25) !important;
+  color: #FFFFFF !important;
+}
+
+[style*="var(--cb-navy-950)"] .cb-btn-outline-pill *,
+[style*="var(--cb-navy-900)"] .cb-btn-outline-pill *,
+[style*="var(--cb-navy-800)"] .cb-btn-outline-pill *,
+[style*="#0B1B3D"] .cb-btn-outline-pill *,
+[style*="#070F26"] .cb-btn-outline-pill * {
+  color: #FFFFFF !important;
+}
+
+/* Zero-flash CSS theme switching for CodeBridge Logo */
+html.dark .cb-logo-light-theme {
+  display: none !important;
+}
+html:not(.dark) .cb-logo-dark-theme {
+  display: none !important;
 }
 
 .cb-btn-cyan {
@@ -675,4 +729,91 @@ select option {
 
 .animate-spin {
   animation: spin 1s linear infinite;
+}
+
+/* ═══════════════════════════════════════════════════════════════════ */
+/* Representative Workspace & Theme Switching Support                 */
+/* ═══════════════════════════════════════════════════════════════════ */
+.cb-rep-workspace {
+  background-color: var(--cb-bg-page);
+  color: var(--cb-text-primary);
+  min-height: 100vh;
+}
+
+.dark .cb-rep-workspace {
+  background-color: #060B19 !important;
+  color: #FFFFFF !important;
+}
+
+.dark .cb-rep-workspace aside {
+  background-color: #0B1428 !important;
+  border-right-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.dark .cb-rep-workspace main {
+  background-color: #060B19 !important;
+}
+
+.dark .cb-rep-workspace [style*="background-color: #FFFFFF"],
+.dark .cb-rep-workspace [style*="background-color: rgb(255, 255, 255)"],
+.dark .cb-rep-workspace [style*="backgroundColor: #FFFFFF"],
+.dark .cb-rep-workspace [style*="backgroundColor: rgb(255, 255, 255)"] {
+  background-color: #0F1C36 !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  color: #FFFFFF !important;
+}
+
+.dark .cb-rep-workspace [style*="background-color: #F8FAFC"],
+.dark .cb-rep-workspace [style*="background-color: rgb(248, 250, 252)"],
+.dark .cb-rep-workspace [style*="backgroundColor: #F8FAFC"],
+.dark .cb-rep-workspace [style*="backgroundColor: rgb(248, 250, 252)"] {
+  background-color: #0B1428 !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  color: #CBD5E1 !important;
+}
+
+.dark .cb-rep-workspace [style*="background-color: #F1F5F9"],
+.dark .cb-rep-workspace [style*="backgroundColor: #F1F5F9"] {
+  background-color: #16264A !important;
+}
+
+.dark .cb-rep-workspace [style*="color: #0F172A"],
+.dark .cb-rep-workspace [style*="color: rgb(15, 23, 42)"],
+.dark .cb-rep-workspace [style*="color: '#0F172A'"] {
+  color: #FFFFFF !important;
+}
+
+.dark .cb-rep-workspace [style*="color: #64748B"],
+.dark .cb-rep-workspace [style*="color: rgb(100, 116, 139)"],
+.dark .cb-rep-workspace [style*="color: '#64748B'"] {
+  color: #94A3B8 !important;
+}
+
+.dark .cb-rep-workspace [style*="border: 1px solid #E2E8F0"],
+.dark .cb-rep-workspace [style*="border-color: #E2E8F0"],
+.dark .cb-rep-workspace [style*="border: '1px solid #E2E8F0'"] {
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.dark .cb-rep-workspace input,
+.dark .cb-rep-workspace select,
+.dark .cb-rep-workspace textarea {
+  background-color: #111D36 !important;
+  color: #FFFFFF !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+.dark .cb-rep-workspace table {
+  color: #FFFFFF !important;
+}
+
+.dark .cb-rep-workspace th {
+  background-color: #0B1428 !important;
+  color: #94A3B8 !important;
+  border-bottom-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.dark .cb-rep-workspace td {
+  border-bottom-color: rgba(255, 255, 255, 0.05) !important;
+  color: #FFFFFF !important;
 }

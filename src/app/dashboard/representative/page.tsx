@@ -119,11 +119,11 @@ export default function RepresentativeOverviewPage() {
       {/* Welcome & Quick Action Hero */}
       <div
         style={{
-          backgroundColor: '#FFFFFF',
+          backgroundColor: 'var(--cb-bg-card)',
           borderRadius: '16px',
           padding: '24px 28px',
-          border: '1px solid #E2E8F0',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+          border: '1px solid var(--cb-border-subtle)',
+          boxShadow: 'var(--cb-shadow-sm, 0 1px 3px rgba(0,0,0,0.02))',
           marginBottom: '24px',
           display: 'flex',
           alignItems: 'center',
@@ -142,21 +142,22 @@ export default function RepresentativeOverviewPage() {
                 fontSize: '11px',
                 fontWeight: 700,
                 color: '#2563EB',
-                backgroundColor: '#EFF6FF',
+                backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                border: '1px solid rgba(37, 99, 235, 0.2)',
                 padding: '2px 8px',
                 borderRadius: '6px',
               }}
             >
               <Sparkles size={12} /> Active Territory
             </span>
-            <span style={{ fontSize: '13px', fontWeight: 600, color: '#64748B' }}>
+            <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--cb-text-secondary)' }}>
               {currentUser?.country?.name || (currency === 'KES' ? 'Kenya' : 'Nigeria')}
             </span>
           </div>
-          <h2 style={{ fontSize: '20px', fontWeight: 800, color: '#0F172A', margin: 0, letterSpacing: '-0.02em' }}>
+          <h2 style={{ fontSize: '20px', fontWeight: 800, color: 'var(--cb-text-primary)', margin: 0, letterSpacing: '-0.02em' }}>
             Welcome back, {repFirstName}
           </h2>
-          <p style={{ fontSize: '13px', color: '#64748B', margin: '4px 0 0 0' }}>
+          <p style={{ fontSize: '13px', color: 'var(--cb-text-secondary)', margin: '4px 0 0 0' }}>
             Here is an overview of your territory leads, active pipeline cadence, and commission disbursements.
           </p>
         </div>
@@ -170,12 +171,12 @@ export default function RepresentativeOverviewPage() {
               gap: '6px',
               padding: '9px 16px',
               borderRadius: '24px',
-              backgroundColor: '#0F172A',
+              backgroundColor: '#2563EB',
               color: '#FFFFFF',
               fontSize: '13px',
               fontWeight: 600,
               textDecoration: 'none',
-              boxShadow: '0 2px 8px rgba(15, 23, 42, 0.15)',
+              boxShadow: '0 2px 8px rgba(37, 99, 235, 0.25)',
             }}
           >
             <Users size={14} /> View Leads Roster
@@ -188,15 +189,15 @@ export default function RepresentativeOverviewPage() {
               gap: '6px',
               padding: '9px 16px',
               borderRadius: '24px',
-              backgroundColor: '#FFFFFF',
-              color: '#0F172A',
-              border: '1px solid #E2E8F0',
+              backgroundColor: 'var(--cb-bg-card)',
+              color: 'var(--cb-text-primary)',
+              border: '1px solid var(--cb-border-subtle)',
               fontSize: '13px',
               fontWeight: 600,
               textDecoration: 'none',
             }}
           >
-            <Layers size={14} color="#64748B" /> Pipeline Funnel
+            <Layers size={14} color="var(--cb-text-secondary)" /> Pipeline Funnel
           </Link>
         </div>
       </div>
@@ -219,32 +220,32 @@ export default function RepresentativeOverviewPage() {
         >
           <div
             style={{
-              backgroundColor: '#FFFFFF',
+              backgroundColor: 'var(--cb-bg-card)',
               borderRadius: '16px',
               padding: '22px',
-              border: '1px solid #E2E8F0',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+              border: '1px solid var(--cb-border-subtle)',
+              boxShadow: 'var(--cb-shadow-sm, 0 1px 3px rgba(0,0,0,0.02))',
               cursor: 'pointer',
               transition: 'transform 0.15s ease, box-shadow 0.15s ease',
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.transform = 'translateY(-2px)';
-              e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,0,0,0.05)';
+              e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,0,0,0.08)';
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.02)';
+              e.currentTarget.style.boxShadow = 'var(--cb-shadow-sm, 0 1px 3px rgba(0,0,0,0.02))';
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-              <div style={{ fontSize: '13px', color: '#64748B', fontWeight: 600 }}>Total Leads</div>
-              <Users size={16} color="#94A3B8" />
+              <div style={{ fontSize: '13px', color: 'var(--cb-text-secondary)', fontWeight: 600 }}>Total Leads</div>
+              <Users size={16} color="var(--cb-text-muted)" />
             </div>
             <div
               style={{
                 fontSize: '34px',
                 fontWeight: 800,
-                color: '#0F172A',
+                color: 'var(--cb-text-primary)',
                 letterSpacing: '-0.03em',
                 lineHeight: 1,
               }}
@@ -255,7 +256,7 @@ export default function RepresentativeOverviewPage() {
               style={{
                 marginTop: '14px',
                 fontSize: '12px',
-                color: totalLeadsCount > 0 ? '#059669' : '#94A3B8',
+                color: totalLeadsCount > 0 ? '#059669' : 'var(--cb-text-muted)',
                 fontWeight: 600,
                 display: 'flex',
                 alignItems: 'center',
@@ -275,25 +276,25 @@ export default function RepresentativeOverviewPage() {
         >
           <div
             style={{
-              backgroundColor: '#FFFFFF',
+              backgroundColor: 'var(--cb-bg-card)',
               borderRadius: '16px',
               padding: '22px',
-              border: '1px solid #E2E8F0',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+              border: '1px solid var(--cb-border-subtle)',
+              boxShadow: 'var(--cb-shadow-sm, 0 1px 3px rgba(0,0,0,0.02))',
               cursor: 'pointer',
               transition: 'transform 0.15s ease, box-shadow 0.15s ease',
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.transform = 'translateY(-2px)';
-              e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,0,0,0.05)';
+              e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,0,0,0.08)';
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.02)';
+              e.currentTarget.style.boxShadow = 'var(--cb-shadow-sm, 0 1px 3px rgba(0,0,0,0.02))';
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-              <div style={{ fontSize: '13px', color: '#64748B', fontWeight: 600 }}>Active Pipeline Deals</div>
+              <div style={{ fontSize: '13px', color: 'var(--cb-text-secondary)', fontWeight: 600 }}>Active Pipeline Deals</div>
               <Layers size={16} color="#2563EB" />
             </div>
             <div
@@ -311,7 +312,7 @@ export default function RepresentativeOverviewPage() {
               style={{
                 marginTop: '14px',
                 fontSize: '12px',
-                color: activeLeadsCount > 0 ? '#2563EB' : '#94A3B8',
+                color: activeLeadsCount > 0 ? '#2563EB' : 'var(--cb-text-muted)',
                 fontWeight: 600,
                 display: 'flex',
                 alignItems: 'center',
@@ -331,32 +332,32 @@ export default function RepresentativeOverviewPage() {
         >
           <div
             style={{
-              backgroundColor: '#FFFFFF',
+              backgroundColor: 'var(--cb-bg-card)',
               borderRadius: '16px',
               padding: '22px',
-              border: '1px solid #E2E8F0',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+              border: '1px solid var(--cb-border-subtle)',
+              boxShadow: 'var(--cb-shadow-sm, 0 1px 3px rgba(0,0,0,0.02))',
               cursor: 'pointer',
               transition: 'transform 0.15s ease, box-shadow 0.15s ease',
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.transform = 'translateY(-2px)';
-              e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,0,0,0.05)';
+              e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,0,0,0.08)';
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.02)';
+              e.currentTarget.style.boxShadow = 'var(--cb-shadow-sm, 0 1px 3px rgba(0,0,0,0.02))';
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-              <div style={{ fontSize: '13px', color: '#64748B', fontWeight: 600 }}>Deals Closed (Won)</div>
+              <div style={{ fontSize: '13px', color: 'var(--cb-text-secondary)', fontWeight: 600 }}>Deals Closed (Won)</div>
               <Briefcase size={16} color="#059669" />
             </div>
             <div
               style={{
                 fontSize: '34px',
                 fontWeight: 800,
-                color: '#0F172A',
+                color: 'var(--cb-text-primary)',
                 letterSpacing: '-0.03em',
                 lineHeight: 1,
               }}
@@ -367,7 +368,7 @@ export default function RepresentativeOverviewPage() {
               style={{
                 marginTop: '14px',
                 fontSize: '12px',
-                color: wonCount > 0 ? '#059669' : '#94A3B8',
+                color: wonCount > 0 ? '#059669' : 'var(--cb-text-muted)',
                 fontWeight: 600,
                 display: 'flex',
                 alignItems: 'center',
@@ -387,32 +388,32 @@ export default function RepresentativeOverviewPage() {
         >
           <div
             style={{
-              backgroundColor: '#FFFFFF',
+              backgroundColor: 'var(--cb-bg-card)',
               borderRadius: '16px',
               padding: '22px',
-              border: '1px solid #E2E8F0',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+              border: '1px solid var(--cb-border-subtle)',
+              boxShadow: 'var(--cb-shadow-sm, 0 1px 3px rgba(0,0,0,0.02))',
               cursor: 'pointer',
               transition: 'transform 0.15s ease, box-shadow 0.15s ease',
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.transform = 'translateY(-2px)';
-              e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,0,0,0.05)';
+              e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,0,0,0.08)';
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.02)';
+              e.currentTarget.style.boxShadow = 'var(--cb-shadow-sm, 0 1px 3px rgba(0,0,0,0.02))';
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-              <div style={{ fontSize: '13px', color: '#64748B', fontWeight: 600 }}>Conversion Rate</div>
-              <TrendingUp size={16} color="#0F172A" />
+              <div style={{ fontSize: '13px', color: 'var(--cb-text-secondary)', fontWeight: 600 }}>Conversion Rate</div>
+              <TrendingUp size={16} color="var(--cb-text-primary)" />
             </div>
             <div
               style={{
                 fontSize: '34px',
                 fontWeight: 800,
-                color: '#0F172A',
+                color: 'var(--cb-text-primary)',
                 letterSpacing: '-0.03em',
                 lineHeight: 1,
               }}
@@ -423,7 +424,7 @@ export default function RepresentativeOverviewPage() {
               style={{
                 marginTop: '14px',
                 fontSize: '12px',
-                color: totalLeadsCount > 0 ? '#64748B' : '#94A3B8',
+                color: totalLeadsCount > 0 ? 'var(--cb-text-secondary)' : 'var(--cb-text-muted)',
                 fontWeight: 600,
                 display: 'flex',
                 alignItems: 'center',

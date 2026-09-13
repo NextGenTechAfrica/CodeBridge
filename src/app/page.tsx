@@ -477,20 +477,17 @@ export default function HomePage() {
               <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
                 <Link
                   href="/contact"
-                  className="cb-btn cb-btn-outline-pill"
+                  className="cb-btn cb-btn-outline-light"
                   style={{
                     padding: '14px 28px',
                     fontSize: '15px',
                     fontWeight: 600,
-                    backgroundColor: 'rgba(255, 255, 255, 0.06)',
-                    borderColor: 'rgba(255, 255, 255, 0.2)',
-                    color: '#FFFFFF',
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: '8px',
                   }}
                 >
-                  <span>Contact Technical Desk</span>
+                  <span style={{ color: '#FFFFFF' }}>Contact Technical Desk</span>
                 </Link>
               </motion.div>
             </div>

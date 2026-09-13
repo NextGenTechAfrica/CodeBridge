@@ -11,11 +11,11 @@ export default function ReferralBanner() {
   return (
     <div
       style={{
-        backgroundColor: '#FFFFFF',
+        backgroundColor: 'var(--cb-bg-card)',
         borderRadius: '16px',
         padding: '18px 24px',
-        border: '1px solid #E2E8F0',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+        border: '1px solid var(--cb-border-subtle)',
+        boxShadow: 'var(--cb-shadow-sm, 0 1px 3px rgba(0,0,0,0.02))',
         marginBottom: '28px',
         display: 'flex',
         flexWrap: 'wrap',
@@ -28,8 +28,9 @@ export default function ReferralBanner() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
           <span
             style={{
-              backgroundColor: '#EFF6FF',
+              backgroundColor: 'rgba(37, 99, 235, 0.1)',
               color: '#2563EB',
+              border: '1px solid rgba(37, 99, 235, 0.2)',
               fontSize: '11px',
               fontWeight: 700,
               padding: '2px 8px',
@@ -38,11 +39,11 @@ export default function ReferralBanner() {
           >
             REFERRAL LINK
           </span>
-          <span style={{ fontSize: '13px', fontWeight: 700, color: '#0F172A' }}>
+          <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--cb-text-primary)' }}>
             Earn 20% Guaranteed Service Commission
           </span>
         </div>
-        <p style={{ fontSize: '12px', color: '#64748B', margin: 0 }}>
+        <p style={{ fontSize: '12px', color: 'var(--cb-text-secondary)', margin: 0 }}>
           Share your link with prospective business owners. New client leads auto-attribute to your commission ledger.
         </p>
       </div>
@@ -55,10 +56,10 @@ export default function ReferralBanner() {
           style={{
             padding: '8px 14px',
             borderRadius: '8px',
-            border: '1px solid #E2E8F0',
-            backgroundColor: '#F8FAFC',
+            border: '1px solid var(--cb-border-subtle)',
+            backgroundColor: 'var(--cb-bg-input, var(--cb-bg-surface))',
             fontSize: '12px',
-            color: '#0F172A',
+            color: 'var(--cb-text-primary)',
             width: '320px',
             fontFamily: 'monospace',
           }}

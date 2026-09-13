@@ -652,15 +652,15 @@ export default function ServicesPage() {
                   <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                     <Link
                       href="/contact"
-                      className="cb-btn cb-btn-outline-pill"
+                      className="cb-btn cb-btn-outline-light"
                       style={{
                         padding: '14px 24px',
-                        backgroundColor: 'rgba(255, 255, 255, 0.08)',
-                        borderColor: 'rgba(255, 255, 255, 0.15)',
-                        color: '#FFFFFF',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '8px',
                       }}
                     >
-                      <span>Contact Technical Desk</span>
+                      <span style={{ color: '#FFFFFF' }}>Contact Technical Desk</span>
                     </Link>
                   </motion.div>
                 </div>

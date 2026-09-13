@@ -25,6 +25,7 @@ import RegisterClientModal from '@/components/dashboard/representative/RegisterC
 import AddLeadModal from '@/components/dashboard/representative/AddLeadModal';
 import ChatDrawer from '@/components/dashboard/ChatDrawer';
 import CodeBridgeLogo from '@/components/common/CodeBridgeLogo';
+import ThemeToggle from '@/components/common/ThemeToggle';
 
 function RepresentativeLayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -131,18 +132,19 @@ function RepresentativeLayoutContent({ children }: { children: React.ReactNode }
 
   return (
     <div
+      className="cb-rep-workspace"
       style={{
         height: '100vh',
         display: 'flex',
         overflow: 'hidden',
-        backgroundColor: '#F8FAFC',
-        color: '#0F172A',
-        fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
+        backgroundColor: 'var(--cb-bg-page)',
+        color: 'var(--cb-text-primary)',
+        fontFamily: 'var(--cb-font-sans, Inter, system-ui, -apple-system, sans-serif)',
         position: 'relative',
       }}
     >
       {/* ========================================================================= */}
-      {/* SIDEBAR: Focused, Crisp White Sidebar                                    */}
+      {/* SIDEBAR: Focused, Crisp Responsive Sidebar                                */}
       {/* ========================================================================= */}
       <aside
         style={{
@@ -151,14 +153,14 @@ function RepresentativeLayoutContent({ children }: { children: React.ReactNode }
           height: '100vh',
           position: 'sticky',
           top: 0,
-          backgroundColor: '#FFFFFF',
-          borderRight: '1px solid #E2E8F0',
+          backgroundColor: 'var(--cb-bg-card)',
+          borderRight: '1px solid var(--cb-border-subtle)',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
           zIndex: 50,
           transition: 'width 0.2s ease, min-width 0.2s ease',
-          boxShadow: '0 0 15px rgba(0,0,0,0.02)',
+          boxShadow: 'var(--cb-shadow-sm, 0 0 15px rgba(0,0,0,0.02))',
         }}
       >
         <div>
@@ -169,14 +171,14 @@ function RepresentativeLayoutContent({ children }: { children: React.ReactNode }
               display: 'flex',
               alignItems: 'center',
               justifyContent: sidebarCollapsed ? 'center' : 'space-between',
-              borderBottom: '1px solid #F1F5F9',
+              borderBottom: '1px solid var(--cb-border-subtle)',
             }}
           >
             {!sidebarCollapsed ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
                 <CodeBridgeLogo
                   size="md"
-                  variant="dark-text"
+                  variant="auto"
                   showTagline={false}
                   href="/dashboard/representative"
                 />
@@ -184,7 +186,7 @@ function RepresentativeLayoutContent({ children }: { children: React.ReactNode }
                   style={{
                     fontSize: '10px',
                     fontWeight: 700,
-                    color: '#2563EB',
+                    color: 'var(--cb-cyan-600, #0284C7)',
                     textTransform: 'uppercase',
                     letterSpacing: '0.06em',
                     paddingLeft: '2px',
@@ -207,7 +209,7 @@ function RepresentativeLayoutContent({ children }: { children: React.ReactNode }
               style={{
                 background: 'none',
                 border: 'none',
-                color: '#94A3B8',
+                color: 'var(--cb-text-muted)',
                 cursor: 'pointer',
                 padding: '6px',
                 borderRadius: '6px',
@@ -227,7 +229,7 @@ function RepresentativeLayoutContent({ children }: { children: React.ReactNode }
                 style={{
                   fontSize: '11px',
                   fontWeight: 700,
-                  color: '#94A3B8',
+                  color: 'var(--cb-text-muted)',
                   letterSpacing: '0.04em',
                   textTransform: 'uppercase',
                   padding: '0 12px 8px 12px',
@@ -251,14 +253,14 @@ function RepresentativeLayoutContent({ children }: { children: React.ReactNode }
                       padding: '10px 12px',
                       borderRadius: '10px',
                       textDecoration: 'none',
-                      backgroundColor: item.isActive ? '#F1F5F9' : 'transparent',
-                      color: item.isActive ? '#0F172A' : '#64748B',
+                      backgroundColor: item.isActive ? 'var(--cb-bg-subtle)' : 'transparent',
+                      color: item.isActive ? 'var(--cb-text-primary)' : 'var(--cb-text-secondary)',
                       fontWeight: item.isActive ? 700 : 500,
                       fontSize: '14px',
                       transition: 'all 0.15s ease',
                     }}
                   >
-                    <Icon size={18} color={item.isActive ? '#0F172A' : '#94A3B8'} />
+                    <Icon size={18} color={item.isActive ? 'var(--cb-text-primary)' : 'var(--cb-text-muted)'} />
                     {!sidebarCollapsed && <span>{item.label}</span>}
                   </Link>
                 );
@@ -271,7 +273,7 @@ function RepresentativeLayoutContent({ children }: { children: React.ReactNode }
         <div
           style={{
             padding: '14px 16px',
-            borderTop: '1px solid #F1F5F9',
+            borderTop: '1px solid var(--cb-border-subtle)',
             position: 'relative',
           }}
         >
@@ -311,7 +313,7 @@ function RepresentativeLayoutContent({ children }: { children: React.ReactNode }
                     style={{
                       fontSize: '13px',
                       fontWeight: 700,
-                      color: '#0F172A',
+                      color: 'var(--cb-text-primary)',
                       whiteSpace: 'nowrap',
                       textOverflow: 'ellipsis',
                       overflow: 'hidden',
@@ -322,7 +324,7 @@ function RepresentativeLayoutContent({ children }: { children: React.ReactNode }
                   <div
                     style={{
                       fontSize: '11px',
-                      color: '#94A3B8',
+                      color: 'var(--cb-text-muted)',
                       whiteSpace: 'nowrap',
                       textOverflow: 'ellipsis',
                       overflow: 'hidden',
@@ -334,7 +336,7 @@ function RepresentativeLayoutContent({ children }: { children: React.ReactNode }
               )}
             </div>
 
-            {!sidebarCollapsed && <ChevronsUpDown size={16} color="#94A3B8" />}
+            {!sidebarCollapsed && <ChevronsUpDown size={16} color="var(--cb-text-muted)" />}
           </div>
 
           {/* Profile Dropdown Menu */}
@@ -345,10 +347,10 @@ function RepresentativeLayoutContent({ children }: { children: React.ReactNode }
                 bottom: '70px',
                 left: '16px',
                 right: '16px',
-                backgroundColor: '#FFFFFF',
-                border: '1px solid #E2E8F0',
+                backgroundColor: 'var(--cb-bg-card)',
+                border: '1px solid var(--cb-border-subtle)',
                 borderRadius: '12px',
-                boxShadow: '0 10px 25px rgba(0,0,0,0.08)',
+                boxShadow: 'var(--cb-shadow-lg, 0 10px 25px rgba(0,0,0,0.15))',
                 padding: '8px',
                 zIndex: 100,
               }}
@@ -356,9 +358,9 @@ function RepresentativeLayoutContent({ children }: { children: React.ReactNode }
               <div
                 style={{
                   padding: '8px 10px',
-                  borderBottom: '1px solid #F1F5F9',
+                  borderBottom: '1px solid var(--cb-border-subtle)',
                   fontSize: '11px',
-                  color: '#64748B',
+                  color: 'var(--cb-text-secondary)',
                 }}
               >
                 <div>
@@ -456,7 +458,7 @@ function RepresentativeLayoutContent({ children }: { children: React.ReactNode }
               style={{
                 fontSize: '26px',
                 fontWeight: 800,
-                color: '#0F172A',
+                color: 'var(--cb-text-primary)',
                 letterSpacing: '-0.02em',
                 margin: 0,
                 display: 'flex',
@@ -469,8 +471,9 @@ function RepresentativeLayoutContent({ children }: { children: React.ReactNode }
                 style={{
                   fontSize: '11px',
                   fontWeight: 700,
-                  color: '#2563EB',
-                  backgroundColor: '#EFF6FF',
+                  color: 'var(--cb-cyan-500, #2563EB)',
+                  backgroundColor: 'var(--cb-bg-subtle, #EFF6FF)',
+                  border: '1px solid var(--cb-border-subtle)',
                   padding: '4px 10px',
                   borderRadius: '12px',
                   letterSpacing: '0.02em',
@@ -481,8 +484,10 @@ function RepresentativeLayoutContent({ children }: { children: React.ReactNode }
             </h1>
           </div>
 
-          {/* Top Actions: Notification Bell, Add Sales Lead, Register Client */}
+          {/* Top Actions: ThemeToggle, Notification Bell, Add Sales Lead, Register Client */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <ThemeToggle />
+
             <button
               onClick={() => setNotificationsOpen(!notificationsOpen)}
               title="Notifications"
@@ -490,12 +495,12 @@ function RepresentativeLayoutContent({ children }: { children: React.ReactNode }
                 width: '40px',
                 height: '40px',
                 borderRadius: '12px',
-                backgroundColor: '#FFFFFF',
-                border: '1px solid #E2E8F0',
+                backgroundColor: 'var(--cb-bg-card)',
+                border: '1px solid var(--cb-border-subtle)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: '#64748B',
+                color: 'var(--cb-text-secondary)',
                 cursor: 'pointer',
                 position: 'relative',
               }}
@@ -535,9 +540,9 @@ function RepresentativeLayoutContent({ children }: { children: React.ReactNode }
                 display: 'flex',
                 alignItems: 'center',
                 gap: '6px',
-                backgroundColor: '#FFFFFF',
-                color: '#0F172A',
-                border: '1px solid #E2E8F0',
+                backgroundColor: 'var(--cb-bg-card)',
+                color: 'var(--cb-text-primary)',
+                border: '1px solid var(--cb-border-subtle)',
                 borderRadius: '24px',
                 padding: '9px 16px',
                 fontWeight: 600,
@@ -546,7 +551,7 @@ function RepresentativeLayoutContent({ children }: { children: React.ReactNode }
                 boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
               }}
             >
-              <UserPlus size={14} color="#64748B" /> Register Client
+              <UserPlus size={14} color="var(--cb-text-secondary)" /> Register Client
             </button>
           </div>
         </div>

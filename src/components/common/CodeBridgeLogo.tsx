@@ -63,50 +63,76 @@ export default function CodeBridgeLogo({
       : { height: size, width: Math.round(size * 5.47) }
     : sizeMap[size] || sizeMap.md;
 
-  // Determine image source based on variant & tagline
-  let src = '/images/codebridge-logo-full.png';
-  let alt = 'CodeBridge — Ideas to Impact';
-  
-  let actualVariant = variant;
-  if (variant === 'auto' && mounted) {
-    actualVariant = resolvedTheme === 'dark' ? 'light-text' : 'dark-text';
-  } else if (variant === 'auto' && !mounted) {
-    actualVariant = 'dark-text'; // default before hydration
-  }
+  const renderPicture = (isDarkText: boolean, themeClass: string = '') => {
+    let png = '/images/codebridge-logo-full.png';
+    let webp = '/images/codebridge-logo-full.webp';
+    let altText = showTagline ? 'CodeBridge — Ideas to Impact' : 'CodeBridge';
 
+    if (isIconOnly) {
+      png = '/images/codebridge-icon.png';
+      webp = '/images/codebridge-icon.webp';
+      altText = 'CodeBridge Icon';
+    } else if (!isDarkText) {
+      // Light text for dark backgrounds
+      png = showTagline
+        ? '/images/codebridge-logo-light.png'
+        : '/images/codebridge-logo-notag-light.png';
+      webp = showTagline
+        ? '/images/codebridge-logo-light.webp'
+        : '/images/codebridge-logo-notag-light.webp';
+    } else {
+      // Dark text for light backgrounds
+      png = showTagline
+        ? '/images/codebridge-logo-full.png'
+        : '/images/codebridge-logo-notag.png';
+      webp = showTagline
+        ? '/images/codebridge-logo-full.webp'
+        : '/images/codebridge-logo-notag.webp';
+    }
+
+    return (
+      <picture className={themeClass} style={{ display: 'inline-flex', alignItems: 'center' }}>
+        <source srcSet={webp} type="image/webp" />
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={png}
+          alt={altText}
+          width={dims.width}
+          height={dims.height}
+          className={`cb-logo-img ${className}`}
+          style={{
+            height: `${dims.height}px`,
+            width: 'auto',
+            maxWidth: '100%',
+            display: 'block',
+            objectFit: 'contain',
+            imageRendering: 'auto',
+            WebkitBackfaceVisibility: 'hidden',
+            transform: 'translateZ(0)',
+            transition: 'opacity 0.2s ease',
+          }}
+          loading={priority ? 'eager' : 'lazy'}
+        />
+      </picture>
+    );
+  };
+
+  let logoContent;
   if (isIconOnly) {
-    src = '/images/codebridge-icon.png';
-    alt = 'CodeBridge Icon';
-  } else if (actualVariant === 'light-text') {
-    src = showTagline
-      ? '/images/codebridge-logo-light.png'
-      : '/images/codebridge-logo-notag-light.png';
-    alt = 'CodeBridge';
+    logoContent = renderPicture(true);
+  } else if (variant === 'dark-text') {
+    logoContent = renderPicture(true);
+  } else if (variant === 'light-text') {
+    logoContent = renderPicture(false);
   } else {
-    src = showTagline
-      ? '/images/codebridge-logo-full.png'
-      : '/images/codebridge-logo-notag.png';
-    alt = 'CodeBridge';
+    // variant === 'auto': Render both with CSS classes for zero-flash instantaneous theme response
+    logoContent = (
+      <>
+        {renderPicture(true, 'cb-logo-light-theme')}
+        {renderPicture(false, 'cb-logo-dark-theme')}
+      </>
+    );
   }
-
-  const logoImg = (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
-      src={src}
-      alt={alt}
-      width={dims.width}
-      height={dims.height}
-      className={`cb-logo-img ${className}`}
-      style={{
-        height: `${dims.height}px`,
-        width: 'auto',
-        maxWidth: '100%',
-        display: 'block',
-        objectFit: 'contain',
-      }}
-      loading={priority ? 'eager' : 'lazy'}
-    />
-  );
 
   if (href) {
     return (
@@ -119,10 +145,10 @@ export default function CodeBridgeLogo({
         }}
         aria-label="CodeBridge Home"
       >
-        {logoImg}
+        {logoContent}
       </Link>
     );
   }
 
-  return logoImg;
+  return logoContent;
 }

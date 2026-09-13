@@ -391,15 +391,17 @@ export default function AboutPage() {
                   <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                     <Link
                       href="/register"
-                      className="cb-btn cb-btn-outline-pill"
+                      className="cb-btn cb-btn-outline-light"
                       style={{
-                        padding: '14px 24px',
-                        backgroundColor: 'rgba(255, 255, 255, 0.08)',
-                        borderColor: 'rgba(255, 255, 255, 0.15)',
-                        color: '#FFFFFF',
+                        padding: '14px 28px',
+                        fontSize: '15px',
+                        fontWeight: 600,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
                       }}
                     >
-                      <span>Become a Representative</span>
+                      <span style={{ color: '#FFFFFF' }}>Become a Representative</span>
                     </Link>
                   </motion.div>
                 </div>
