@@ -151,7 +151,7 @@ export default function RepresentativeOverviewPage() {
               <Sparkles size={12} /> REPRESENTATIVE CONSOLE
             </span>
             <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--cb-text-secondary)' }}>
-              &bull; {currentUser?.country?.name || 'Assigned'} Metro &bull; 20% Guaranteed Commission
+              &bull; {currentUser?.country?.name || (currency === 'NGN' ? 'Nigeria' : 'Kenya')} Metro &bull; 20% Guaranteed Commission
             </span>
           </div>
 

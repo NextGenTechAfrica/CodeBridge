@@ -16,7 +16,17 @@ import { useRep } from '../RepContext';
 import EarningsSummaryCard from '@/components/dashboard/representative/EarningsSummaryCard';
 
 export default function RepresentativePerformancePage() {
-  const { currency } = useRep();
+  const { currency, currentUser, referralCode } = useRep();
+
+  const isNigeria =
+    currentUser?.country?.code === 'NG' ||
+    currentUser?.countryId === 'c_ng' ||
+    currency === 'NGN' ||
+    Boolean(referralCode?.startsWith('NGA')) ||
+    Boolean(currentUser?.country?.name && /nigeria/i.test(currentUser.country.name));
+
+  const repCurrency = isNigeria ? 'NGN' : (currency || 'KES');
+  const defaultPayoutMethod = isNigeria ? 'BANK_TRANSFER' : 'MPESA';
 
   const [activeCommercialTab, setActiveCommercialTab] = useState<'proposals' | 'invoices' | 'ledger'>('proposals');
   const [proposals, setProposals] = useState<any[]>([]);
@@ -27,16 +37,16 @@ export default function RepresentativePerformancePage() {
     totalPendingMinor: 0,
     recoveryBalanceMinor: 0,
     netPayableMinor: 0,
-    currency: 'KES',
+    currency: repCurrency,
   });
   const [ledgerEntries, setLedgerEntries] = useState<any[]>([]);
   const [payoutSettings, setPayoutSettings] = useState<any>({
-    currency: 'KES',
-    method: 'MPESA',
+    currency: repCurrency,
+    method: defaultPayoutMethod,
     destination: '',
-    bankCode: 'MPS',
+    bankCode: isNigeria ? 'NG_BANK' : 'MPS',
     accountName: '',
-    referralCode: 'KEN-001',
+    referralCode: referralCode || (isNigeria ? 'NGA-001' : 'KEN-001'),
   });
   const [loading, setLoading] = useState(true);
 
@@ -61,11 +71,18 @@ export default function RepresentativePerformancePage() {
       if (resComms.ok) {
         const commData = await resComms.json();
         if (commData.summary) {
-          setFinancialSummary(commData.summary);
+          setFinancialSummary({
+            ...commData.summary,
+            currency: commData.summary.currency || repCurrency,
+          });
         }
         setLedgerEntries(commData.ledger || []);
         if (commData.payoutSettings) {
-          setPayoutSettings(commData.payoutSettings);
+          setPayoutSettings({
+            ...commData.payoutSettings,
+            currency: commData.payoutSettings.currency || repCurrency,
+            method: commData.payoutSettings.method || defaultPayoutMethod,
+          });
         }
       }
     } catch (err) {
@@ -102,7 +119,7 @@ export default function RepresentativePerformancePage() {
   return (
     <div>
       {/* Earnings & Commission Summary Header Card */}
-      <EarningsSummaryCard financialSummary={financialSummary} payoutSettings={payoutSettings} />
+      <EarningsSummaryCard financialSummary={financialSummary} payoutSettings={payoutSettings} repCurrency={repCurrency} />
 
       {/* ========================================================================= */}
       {/* CONSOLIDATED COMMERCIAL & ACCOUNTING MODULE                               */}
@@ -454,13 +471,13 @@ export default function RepresentativePerformancePage() {
             <div style={{ fontSize: '12px', color: 'var(--cb-text-secondary)', fontWeight: 600 }}>Configured Payout Destination</div>
             <div style={{ fontSize: '16px', fontWeight: 700, color: 'var(--cb-text-primary)', marginTop: '4px' }}>
               {payoutSettings.destination
-                ? `${payoutSettings.method === 'MPESA' ? 'M-Pesa' : 'Bank'} (${payoutSettings.destination})`
-                : currency === 'KES'
+                ? `${payoutSettings.method === 'MPESA' ? 'M-Pesa' : 'Bank Transfer'} (${payoutSettings.destination})`
+                : repCurrency === 'KES'
                 ? 'M-Pesa Payout Destination'
-                : 'Bank Payout Destination'}
+                : 'Direct Bank Transfer (Nigeria)'}
             </div>
             <div style={{ fontSize: '11px', color: 'var(--cb-text-secondary)', marginTop: '6px' }}>
-              Settlement currency: {payoutSettings.currency || currency}
+              Settlement currency: {payoutSettings.currency || repCurrency}
             </div>
           </div>
 

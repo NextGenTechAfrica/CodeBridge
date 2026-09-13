@@ -11,18 +11,28 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Locate representative profile
-    const rep = await queryOne<any>(
-      'SELECT * FROM representatives WHERE user_id = ?',
-      [session.userId]
-    );
+    // Locate representative profile with territory country details
+    const rep = await queryOne<any>(`
+      SELECT r.*, c.code as country_code, c.name as country_name, c.currency as country_currency
+      FROM representatives r
+      LEFT JOIN countries c ON r.country_id = c.id
+      WHERE r.user_id = ?
+    `, [session.userId]);
 
     if (!rep) {
       return NextResponse.json({ error: 'Sales representative profile not found.' }, { status: 404 });
     }
 
+    const isNigeria = rep.country_code === 'NG' || rep.country_id === 'c_ng';
+    const repCurrency = isNigeria ? 'NGN' : (rep.country_currency || rep.payout_currency || 'KES');
+    const repMethod = rep.payout_method || (isNigeria ? 'BANK_TRANSFER' : 'MPESA');
+
     // 1. Authoritative financial summary derived directly from immutable ledger
-    const summary = await deriveRepFinancialSummary(rep.id);
+    const rawSummary = await deriveRepFinancialSummary(rep.id);
+    const summary = {
+      ...rawSummary,
+      currency: repCurrency,
+    };
 
     // 2. Commission events
     const commissionEvents = await query<any>(`
@@ -67,12 +77,12 @@ export async function GET(req: NextRequest) {
       adjustments,
       ledger,
       payoutSettings: {
-        currency: rep.payout_currency,
-        method: rep.payout_method,
-        destination: rep.payout_destination,
-        bankCode: rep.payout_bank_code,
-        accountName: rep.payout_account_name,
-        referralCode: rep.referral_code,
+        currency: repCurrency,
+        method: repMethod,
+        destination: rep.payout_destination || '',
+        bankCode: rep.payout_bank_code || (isNigeria ? 'NG_BANK' : 'MPS'),
+        accountName: rep.payout_account_name || '',
+        referralCode: rep.referral_code || (isNigeria ? 'NGA-001' : 'KEN-001'),
       },
     }, { status: 200 });
   } catch (err: any) {

@@ -20,10 +20,11 @@ interface EarningsSummaryProps {
     bankCode?: string;
     accountName?: string;
   };
+  repCurrency?: string;
 }
 
-export default function EarningsSummaryCard({ financialSummary, payoutSettings }: EarningsSummaryProps) {
-  const currency = financialSummary.currency || 'KES';
+export default function EarningsSummaryCard({ financialSummary, payoutSettings, repCurrency }: EarningsSummaryProps) {
+  const currency = repCurrency || payoutSettings?.currency || financialSummary?.currency || 'NGN';
   const totalEarnedFormatted = ((financialSummary.totalEarnedMinor || 0) / 100).toLocaleString();
   const totalPaidFormatted = ((financialSummary.totalPaidMinor || 0) / 100).toLocaleString();
   const netPayableFormatted = ((financialSummary.netPayableMinor || 0) / 100).toLocaleString();

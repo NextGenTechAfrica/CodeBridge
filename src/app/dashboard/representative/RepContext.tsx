@@ -159,8 +159,20 @@ export function RepProvider({ children }: { children: React.ReactNode }) {
       });
   }, [router]);
 
-  const currency = currentUser?.country?.currency || 'KES';
-  const referralCode = currentUser?.representative?.referralCode || (currentUser?.country?.code === 'NG' ? 'NGA-001' : 'KEN-001');
+  const isNigeriaUser =
+    currentUser?.country?.code === 'NG' ||
+    currentUser?.countryId === 'c_ng' ||
+    currentUser?.representative?.referralCode?.startsWith('NGA') ||
+    Boolean(currentUser?.country?.name && /nigeria/i.test(currentUser.country.name));
+
+  const currency =
+    currentUser?.country?.currency ||
+    currentUser?.representative?.payoutCurrency ||
+    (isNigeriaUser ? 'NGN' : 'KES');
+
+  const referralCode =
+    currentUser?.representative?.referralCode ||
+    (isNigeriaUser ? 'NGA-001' : 'KEN-001');
   const isApproved = currentUser?.status === 'ACTIVE' || currentUser?.role === 'SUPER_ADMIN' || currentUser?.role === 'ADMIN';
 
   // Referral URL

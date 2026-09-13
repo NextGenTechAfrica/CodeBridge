@@ -635,11 +635,28 @@ export async function deriveRepFinancialSummary(
   let totalReversedMinor = 0;
   let recoveryCreatedMinor = 0;
   let recoveryOffsetMinor = 0;
-  let defaultCurrency = 'KES';
+
+  // Look up representative's operating territory and assigned country currency
+  let defaultCurrency = 'NGN';
+  try {
+    const repCountry = await queryFn(`
+      SELECT c.currency, c.code as country_code
+      FROM representatives r
+      JOIN countries c ON r.country_id = c.id
+      WHERE r.id = ?
+    `, [repId]);
+    if (repCountry && repCountry.length > 0 && repCountry[0].currency) {
+      defaultCurrency = repCountry[0].currency;
+    }
+  } catch {
+    defaultCurrency = 'NGN';
+  }
 
   for (const r of rows) {
     const amt = Number(r.amount_minor);
-    defaultCurrency = r.currency;
+    if (r.currency) {
+      defaultCurrency = r.currency;
+    }
 
     if (r.entry_type === 'COMMISSION') {
       totalEarnedMinor += amt;

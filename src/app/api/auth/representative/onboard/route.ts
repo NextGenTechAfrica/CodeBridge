@@ -117,11 +117,20 @@ export async function POST(req: NextRequest) {
         payload.avatarUrl || null,
       ]);
 
-      // 3. Insert Representative record (Immediate ACTIVE status, default commission rate)
+      const isNigeria = country.code === 'NG';
+      const prefix = isNigeria ? 'NGA' : 'KEN';
+      const repReferralCode = `${prefix}-${Math.floor(100 + Math.random() * 900)}`;
+      const payoutCurrency = isNigeria ? 'NGN' : 'KES';
+      const payoutMethod = isNigeria ? 'BANK_TRANSFER' : 'MPESA';
+
+      // 3. Insert Representative record (Immediate ACTIVE status, country-aligned referral & payout)
       await tx.execute(`
-        INSERT INTO representatives (id, user_id, country_id, approval_status, commission_rate_bps, notes, approved_at, created_at, updated_at)
-        VALUES (?, ?, ?, 'ACTIVE', 2000, 'Google OAuth self-onboarded', datetime('now'), datetime('now'), datetime('now'))
-      `, [repId, userId, countryId]);
+        INSERT INTO representatives (
+          id, user_id, country_id, approval_status, commission_rate_bps,
+          referral_code, payout_currency, payout_method, notes, approved_at, created_at, updated_at
+        )
+        VALUES (?, ?, ?, 'ACTIVE', 2000, ?, ?, ?, 'Google OAuth self-onboarded', datetime('now'), datetime('now'), datetime('now'))
+      `, [repId, userId, countryId, repReferralCode, payoutCurrency, payoutMethod]);
     });
 
     // Record audit log
