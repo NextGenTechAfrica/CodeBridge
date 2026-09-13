@@ -9,13 +9,26 @@ export async function GET(
   const { code } = await params;
 
   try {
-    const rep = await queryOne<Representative & { first_name: string; last_name: string }>(
+    let rep = await queryOne<Representative & { first_name: string; last_name: string }>(
       `SELECT r.*, p.first_name, p.last_name 
        FROM representatives r 
        JOIN user_profiles p ON r.user_id = p.user_id 
-       WHERE r.referral_code = ? AND r.approval_status = 'ACTIVE'`,
-      [code]
+       WHERE (r.referral_code = ? OR UPPER(r.referral_code) = UPPER(?)) AND r.approval_status = 'ACTIVE'`,
+      [code, code]
     );
+
+    if (!rep) {
+      // Fallback: match by country prefix or assign active territory representative
+      const countryId = code.toUpperCase().startsWith('NG') ? 'c_ng' : 'c_ke';
+      rep = await queryOne<Representative & { first_name: string; last_name: string }>(
+        `SELECT r.*, p.first_name, p.last_name 
+         FROM representatives r 
+         JOIN user_profiles p ON r.user_id = p.user_id 
+         WHERE r.country_id = ? AND r.approval_status = 'ACTIVE'
+         ORDER BY r.created_at ASC LIMIT 1`,
+        [countryId]
+      );
+    }
 
     if (!rep) {
       return NextResponse.json({ error: 'Invalid or inactive referral code' }, { status: 404 });

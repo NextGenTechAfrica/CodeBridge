@@ -19,6 +19,8 @@ import {
   UserPlus,
   CheckCircle2,
   RefreshCw,
+  Menu,
+  X,
 } from 'lucide-react';
 import { RepProvider, useRep } from './RepContext';
 import AddClientModal from '@/components/dashboard/representative/AddClientModal';
@@ -29,6 +31,7 @@ import ThemeToggle from '@/components/common/ThemeToggle';
 function RepresentativeLayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const mainRef = React.useRef<HTMLElement>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   React.useEffect(() => {
     // Reset scroll position on route change — covers both the main container
@@ -37,6 +40,7 @@ function RepresentativeLayoutContent({ children }: { children: React.ReactNode }
       mainRef.current.scrollTop = 0;
     }
     window.scrollTo(0, 0);
+    setMobileMenuOpen(false);
   }, [pathname]);
   const {
     currentUser,
@@ -145,7 +149,23 @@ function RepresentativeLayoutContent({ children }: { children: React.ReactNode }
       {/* ========================================================================= */}
       {/* SIDEBAR: Focused, Crisp Responsive Sidebar                                */}
       {/* ========================================================================= */}
+      {/* Mobile Backdrop */}
+      {mobileMenuOpen && (
+        <div
+          onClick={() => setMobileMenuOpen(false)}
+          className="cb-rep-backdrop"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.65)',
+            backdropFilter: 'blur(4px)',
+            zIndex: 90,
+          }}
+        />
+      )}
+
       <aside
+        className={`cb-rep-sidebar ${mobileMenuOpen ? 'mobile-open' : ''}`}
         style={{
           width: sidebarCollapsed ? '72px' : '260px',
           minWidth: sidebarCollapsed ? '72px' : '260px',
@@ -157,8 +177,8 @@ function RepresentativeLayoutContent({ children }: { children: React.ReactNode }
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
-          zIndex: 50,
-          transition: 'width 0.2s ease, min-width 0.2s ease',
+          zIndex: 95,
+          transition: 'width 0.2s ease, min-width 0.2s ease, transform 0.25s ease',
           boxShadow: 'var(--cb-shadow-sm, 0 0 15px rgba(0,0,0,0.02))',
         }}
       >
@@ -166,33 +186,22 @@ function RepresentativeLayoutContent({ children }: { children: React.ReactNode }
           {/* Brand Header */}
           <div
             style={{
-              padding: '20px 18px',
+              padding: '18px 20px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: sidebarCollapsed ? 'center' : 'space-between',
               borderBottom: '1px solid var(--cb-border-subtle)',
+              minHeight: '74px',
             }}
           >
             {!sidebarCollapsed ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <CodeBridgeLogo
                   size="md"
                   variant="auto"
-                  showTagline={false}
+                  showTagline={true}
                   href="/dashboard/representative"
                 />
-                <div
-                  style={{
-                    fontSize: '10px',
-                    fontWeight: 700,
-                    color: 'var(--cb-cyan-600, #0284C7)',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.06em',
-                    paddingLeft: '2px',
-                  }}
-                >
-                  Sales Representative
-                </div>
               </div>
             ) : (
               <CodeBridgeLogo
@@ -205,6 +214,7 @@ function RepresentativeLayoutContent({ children }: { children: React.ReactNode }
             <button
               onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
               title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              className="cb-desktop-collapse-btn"
               style={{
                 background: 'none',
                 border: 'none',
@@ -403,6 +413,7 @@ function RepresentativeLayoutContent({ children }: { children: React.ReactNode }
       {/* ========================================================================= */}
       <main
         ref={mainRef}
+        className="cb-rep-main"
         style={{
           flex: 1,
           padding: '32px 40px',
@@ -423,15 +434,37 @@ function RepresentativeLayoutContent({ children }: { children: React.ReactNode }
             gap: '16px',
           }}
         >
-          <div>
-            <div
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+            <button
+              onClick={() => setMobileMenuOpen(true)}
+              className="cb-rep-mobile-menu-btn"
+              title="Open Navigation"
+              aria-label="Open Navigation"
               style={{
-                display: 'flex',
+                display: 'none',
                 alignItems: 'center',
-                gap: '8px',
-                marginBottom: '6px',
+                justifyContent: 'center',
+                width: '38px',
+                height: '38px',
+                borderRadius: '10px',
+                border: '1px solid var(--cb-border-subtle)',
+                backgroundColor: 'var(--cb-bg-card)',
+                color: 'var(--cb-text-primary)',
+                cursor: 'pointer',
               }}
             >
+              <Menu size={18} />
+            </button>
+
+            <div>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  marginBottom: '6px',
+                }}
+              >
               <span
                 style={{
                   fontSize: '12px',
@@ -482,6 +515,7 @@ function RepresentativeLayoutContent({ children }: { children: React.ReactNode }
               </span>
             </h1>
           </div>
+        </div>
 
           {/* Top Actions: ThemeToggle, Notification Bell, Add Sales Lead, Register Client */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>

@@ -146,32 +146,7 @@ export default function RepresentativeLeadsPage() {
         }}
       >
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <h1
-              style={{
-                fontSize: '22px',
-                fontWeight: 800,
-                color: 'var(--cb-text-primary)',
-                letterSpacing: '-0.02em',
-                margin: 0,
-              }}
-            >
-              My Clients
-            </h1>
-            <span
-              style={{
-                fontSize: '12px',
-                fontWeight: 700,
-                color: '#2563EB',
-                backgroundColor: 'rgba(37, 99, 235, 0.1)',
-                padding: '2px 10px',
-                borderRadius: '999px',
-              }}
-            >
-              {leads.length} {leads.length === 1 ? 'client' : 'clients'}
-            </span>
-          </div>
-          <p style={{ fontSize: '13px', color: 'var(--cb-text-secondary)', margin: '4px 0 0 0' }}>
+          <p style={{ fontSize: '13px', color: 'var(--cb-text-secondary)', margin: 0 }}>
             Manage client details, project requirements, and status updates across your territory.
           </p>
         </div>

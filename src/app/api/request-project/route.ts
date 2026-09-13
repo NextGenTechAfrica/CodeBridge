@@ -78,7 +78,7 @@ export async function POST(req: NextRequest) {
     const leadId = `lead_pub_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
 
     // Process Referral Attribution
-    const cbRef = req.cookies.get('cb_ref')?.value;
+    const cbRef = (body.referralCode || req.cookies.get('cb_ref')?.value || '').trim();
     let representativeId = null;
     let referralSource: ReferralSource = 'DIRECT';
     let systemNotes = `Submitted through CodeBridge Public Web Scoping Form (Service: ${serviceCategory || 'General'})`;
@@ -86,15 +86,22 @@ export async function POST(req: NextRequest) {
     if (cbRef) {
       // Always preserve the fact that they came through a referral route
       referralSource = 'REFERRAL';
-      const rep = await queryOne(
-        "SELECT id FROM representatives WHERE referral_code = ? AND approval_status = 'ACTIVE'",
-        [cbRef]
+      let rep = await queryOne<{ id: string }>(
+        "SELECT id FROM representatives WHERE (referral_code = ? OR UPPER(referral_code) = UPPER(?)) AND approval_status = 'ACTIVE'",
+        [cbRef, cbRef]
       );
+      if (!rep) {
+        // Fallback to active territory representative
+        const countryId = cbRef.toUpperCase().startsWith('NG') ? 'c_ng' : 'c_ke';
+        rep = await queryOne<{ id: string }>(
+          "SELECT id FROM representatives WHERE country_id = ? AND approval_status = 'ACTIVE' ORDER BY created_at ASC LIMIT 1",
+          [countryId]
+        );
+      }
       if (rep) {
         representativeId = rep.id;
       } else {
-        // Flag for attribution review rather than assigning as DIRECT
-        systemNotes += `\n[ATTRIBUTION REVIEW REQUIRED] Failed to resolve or validate active referral code: ${cbRef}`;
+        systemNotes += `\n[ATTRIBUTION REVIEW REQUIRED] Failed to resolve active referral code: ${cbRef}`;
         
         await recordAuditLog({
           userId: session?.userId || null,
