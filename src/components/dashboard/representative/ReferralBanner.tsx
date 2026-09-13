@@ -2,7 +2,7 @@
 'use client';
 
 import React from 'react';
-import { Copy, Check } from 'lucide-react';
+import { Copy, Check, Sparkles, ShieldCheck } from 'lucide-react';
 import { useRep } from '@/app/dashboard/representative/RepContext';
 
 export default function ReferralBanner() {
@@ -11,77 +11,83 @@ export default function ReferralBanner() {
   return (
     <div
       style={{
-        backgroundColor: 'var(--cb-bg-card)',
+        background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.08) 0%, rgba(6, 182, 212, 0.04) 50%, var(--cb-bg-card) 100%)',
         borderRadius: '16px',
-        padding: '18px 24px',
-        border: '1px solid var(--cb-border-subtle)',
-        boxShadow: 'var(--cb-shadow-sm, 0 1px 3px rgba(0,0,0,0.02))',
+        padding: '20px 26px',
+        border: '1px solid rgba(37, 99, 235, 0.25)',
+        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.06)',
         marginBottom: '28px',
         display: 'flex',
         flexWrap: 'wrap',
         alignItems: 'center',
         justifyContent: 'space-between',
-        gap: '16px',
+        gap: '18px',
       }}
     >
       <div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
           <span
             style={{
-              backgroundColor: 'rgba(37, 99, 235, 0.1)',
-              color: '#2563EB',
-              border: '1px solid rgba(37, 99, 235, 0.2)',
+              backgroundColor: 'rgba(37, 99, 235, 0.15)',
+              color: '#38BDF8',
+              border: '1px solid rgba(37, 99, 235, 0.3)',
               fontSize: '11px',
-              fontWeight: 700,
+              fontWeight: 800,
               padding: '2px 8px',
               borderRadius: '6px',
+              letterSpacing: '0.04em',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px',
             }}
           >
-            REFERRAL LINK
+            <ShieldCheck size={12} /> 20% COMMISSION LINK
           </span>
-          <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--cb-text-primary)' }}>
-            Earn 20% Guaranteed Service Commission
+          <span style={{ fontSize: '14px', fontWeight: 800, color: 'var(--cb-text-primary)' }}>
+            Client Self-Onboarding &amp; Attribution
           </span>
         </div>
-        <p style={{ fontSize: '12px', color: 'var(--cb-text-secondary)', margin: 0 }}>
-          Share your link with prospective business owners. New client leads auto-attribute to your commission ledger.
+        <p style={{ fontSize: '12px', color: 'var(--cb-text-secondary)', margin: 0, lineHeight: 1.5 }}>
+          Share your link directly with prospective business clients. When they submit their project specifications, they are automatically tied to your financial ledger.
         </p>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
         <input
           type="text"
           readOnly
           value={referralLink}
           style={{
-            padding: '8px 14px',
-            borderRadius: '8px',
+            padding: '10px 14px',
+            borderRadius: '10px',
             border: '1px solid var(--cb-border-subtle)',
-            backgroundColor: 'var(--cb-bg-input, var(--cb-bg-surface))',
+            backgroundColor: 'var(--cb-bg-surface)',
             fontSize: '12px',
             color: 'var(--cb-text-primary)',
             width: '320px',
+            maxWidth: '100%',
             fontFamily: 'monospace',
           }}
         />
         <button
           onClick={copyReferralLink}
           style={{
-            display: 'flex',
+            display: 'inline-flex',
             alignItems: 'center',
             gap: '6px',
             backgroundColor: copiedReferral ? '#059669' : '#2563EB',
             color: '#FFFFFF',
             border: 'none',
-            borderRadius: '8px',
-            padding: '8px 16px',
-            fontSize: '12px',
-            fontWeight: 600,
+            borderRadius: '10px',
+            padding: '10px 18px',
+            fontSize: '13px',
+            fontWeight: 700,
             cursor: 'pointer',
-            transition: 'background-color 0.15s ease',
+            transition: 'all 0.15s ease',
+            boxShadow: copiedReferral ? '0 2px 8px rgba(5, 150, 105, 0.4)' : '0 2px 8px rgba(37, 99, 235, 0.3)',
           }}
         >
-          {copiedReferral ? <Check size={14} /> : <Copy size={14} />}
+          {copiedReferral ? <Check size={15} /> : <Copy size={15} />}
           {copiedReferral ? 'Copied!' : 'Copy Link'}
         </button>
       </div>

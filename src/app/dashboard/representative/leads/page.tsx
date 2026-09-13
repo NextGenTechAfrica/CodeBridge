@@ -186,17 +186,17 @@ export default function RepresentativeLeadsPage() {
         >
           <div>
             <h2 style={{ fontSize: '16px', fontWeight: 800, color: 'var(--cb-text-primary)', margin: 0 }}>
-              Search & Filter Territory Leads
+              Search & Filter Territory Clients
             </h2>
             <p style={{ fontSize: '12px', color: 'var(--cb-text-secondary)', margin: '4px 0 16px 0' }}>
-              Filter by client name, email, contact person, or specific scoping keywords.
+              Filter by client company, email, contact person, or specific scoping requirements.
             </p>
 
             <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
               <Search size={16} style={{ position: 'absolute', left: '14px', color: 'var(--cb-text-muted)' }} />
               <input
                 type="text"
-                placeholder="Search leads by name, email, notes..."
+                placeholder="Search clients by name, email, notes..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 style={{
@@ -243,7 +243,7 @@ export default function RepresentativeLeadsPage() {
             }}
           >
             <span>
-              Showing <strong>{filteredLeads.length}</strong> of {leads.length} leads
+              Showing <strong>{filteredLeads.length}</strong> of {leads.length} clients
             </span>
             <button
               onClick={() => setLeadModalOpen(true)}
@@ -261,7 +261,7 @@ export default function RepresentativeLeadsPage() {
                 cursor: 'pointer',
               }}
             >
-              <Plus size={14} /> Add Sales Lead
+              <Plus size={14} /> Add Client
             </button>
           </div>
         </div>
@@ -430,7 +430,7 @@ export default function RepresentativeLeadsPage() {
                 cursor: 'pointer',
               }}
             >
-              <Plus size={14} /> Add Lead
+              <Plus size={14} /> Add Client
             </button>
           </div>
 
@@ -482,9 +482,9 @@ export default function RepresentativeLeadsPage() {
         {filteredLeads.length === 0 ? (
           <div style={{ padding: '48px', textAlign: 'center', color: 'var(--cb-text-secondary)' }}>
             <Building2 size={36} color="var(--cb-text-muted)" style={{ margin: '0 auto 12px auto' }} />
-            <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--cb-text-primary)' }}>No leads found</div>
+            <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--cb-text-primary)' }}>No clients found</div>
             <p style={{ fontSize: '13px', margin: '4px 0 16px 0', color: 'var(--cb-text-secondary)' }}>
-              {searchQuery ? 'No leads matched your search query.' : 'There are no active leads in this pipeline stage.'}
+              {searchQuery ? 'No clients matched your search query.' : 'There are no active clients in this pipeline stage.'}
             </p>
             <button
               onClick={() => setLeadModalOpen(true)}
@@ -499,7 +499,7 @@ export default function RepresentativeLeadsPage() {
                 cursor: 'pointer',
               }}
             >
-              + Register First Lead
+              + Add Client
             </button>
           </div>
         ) : (

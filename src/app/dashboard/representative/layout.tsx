@@ -21,8 +21,7 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { RepProvider, useRep } from './RepContext';
-import RegisterClientModal from '@/components/dashboard/representative/RegisterClientModal';
-import AddLeadModal from '@/components/dashboard/representative/AddLeadModal';
+import AddClientModal from '@/components/dashboard/representative/AddClientModal';
 import ChatDrawer from '@/components/dashboard/ChatDrawer';
 import CodeBridgeLogo from '@/components/common/CodeBridgeLogo';
 import ThemeToggle from '@/components/common/ThemeToggle';
@@ -70,31 +69,31 @@ function RepresentativeLayoutContent({ children }: { children: React.ReactNode }
   const navItems = [
     {
       href: '/dashboard/representative',
-      label: 'Dashboard',
+      label: 'Overview',
       icon: LayoutDashboard,
       isActive: pathname === '/dashboard/representative',
     },
     {
       href: '/dashboard/representative/leads',
-      label: 'Leads',
+      label: 'Clients CRM',
       icon: Users,
       isActive: pathname.startsWith('/dashboard/representative/leads'),
     },
     {
       href: '/dashboard/representative/pipeline',
-      label: 'Deals in Progress',
+      label: 'Pipeline & Deals',
       icon: Layers,
       isActive: pathname.startsWith('/dashboard/representative/pipeline'),
     },
     {
       href: '/dashboard/representative/clients',
-      label: 'Clients',
+      label: 'Active Projects',
       icon: Briefcase,
       isActive: pathname.startsWith('/dashboard/representative/clients'),
     },
     {
       href: '/dashboard/representative/performance',
-      label: 'Your Results',
+      label: 'Commission & Results',
       icon: TrendingUp,
       isActive: pathname.startsWith('/dashboard/representative/performance'),
     },
@@ -102,11 +101,11 @@ function RepresentativeLayoutContent({ children }: { children: React.ReactNode }
 
   // Route Title Mapping
   const getPageTitle = () => {
-    if (pathname.startsWith('/dashboard/representative/leads')) return 'Leads Management';
+    if (pathname.startsWith('/dashboard/representative/leads')) return 'Clients CRM';
     if (pathname.startsWith('/dashboard/representative/pipeline')) return 'Pipeline Analytics';
-    if (pathname.startsWith('/dashboard/representative/clients')) return 'Referred Clients & Projects';
+    if (pathname.startsWith('/dashboard/representative/clients')) return 'Client Projects & Accounts';
     if (pathname.startsWith('/dashboard/representative/performance')) return 'Commercial Performance';
-    return 'Dashboard';
+    return 'Representative Overview';
   };
 
   if (loading) {
@@ -509,49 +508,35 @@ function RepresentativeLayoutContent({ children }: { children: React.ReactNode }
             </button>
 
             <button
-              onClick={() => setLeadModalOpen(true)}
+              onClick={() => {
+                setNewClientOnboardingUrl('');
+                setLeadModalOpen(true);
+              }}
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
-                backgroundColor: '#2563EB',
+                background: 'linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%)',
                 color: '#FFFFFF',
                 border: 'none',
                 borderRadius: '24px',
-                padding: '10px 20px',
+                padding: '10px 22px',
                 fontWeight: 700,
                 fontSize: '13px',
                 cursor: 'pointer',
-                boxShadow: '0 4px 14px rgba(37, 99, 235, 0.35)',
-                transition: 'transform 0.15s ease, background-color 0.2s ease',
+                boxShadow: '0 4px 14px rgba(37, 99, 235, 0.4)',
+                transition: 'all 0.15s ease',
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#1D4ED8')}
-              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#2563EB')}
-            >
-              <Plus size={15} /> Add Sales Lead
-            </button>
-
-            <button
-              onClick={() => {
-                setNewClientOnboardingUrl('');
-                setClientModalOpen(true);
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-1px)';
+                e.currentTarget.style.boxShadow = '0 6px 18px rgba(37, 99, 235, 0.5)';
               }}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                backgroundColor: 'var(--cb-bg-card)',
-                color: 'var(--cb-text-primary)',
-                border: '1px solid var(--cb-border-subtle)',
-                borderRadius: '24px',
-                padding: '9px 16px',
-                fontWeight: 600,
-                fontSize: '13px',
-                cursor: 'pointer',
-                boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 4px 14px rgba(37, 99, 235, 0.4)';
               }}
             >
-              <UserPlus size={14} color="var(--cb-text-secondary)" /> Register Client
+              <Plus size={16} /> Add Client
             </button>
           </div>
         </div>
@@ -582,9 +567,8 @@ function RepresentativeLayoutContent({ children }: { children: React.ReactNode }
         {children}
       </main>
 
-      {/* Global Modals */}
-      <RegisterClientModal />
-      <AddLeadModal />
+      {/* Global Unified Add Client Modal */}
+      <AddClientModal />
 
       {/* Global Live Chat Drawer */}
       {chatOpen && chatEntityId && (
