@@ -208,7 +208,7 @@ export function RepProvider({ children }: { children: React.ReactNode }) {
       const data = await res.json();
       if (res.ok) {
         setLeadModalOpen(false);
-        setFeedback('New business lead registered into your pipeline!');
+        setFeedback('New client added successfully!');
         setNewLead({
           businessName: '',
           contactPerson: '',

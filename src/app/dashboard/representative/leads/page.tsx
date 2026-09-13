@@ -13,9 +13,9 @@ import {
 } from 'lucide-react';
 import { useRep } from '../RepContext';
 
-const PIPELINE_STAGES = [
+const DEAL_STAGES = [
   { key: 'ALL', label: 'All Records', match: () => true },
-  { key: 'NEW', label: '1. New Lead', match: (l: any) => l.status === 'NEW' || l.status === 'PROSPECT' },
+  { key: 'NEW', label: '1. New Client', match: (l: any) => l.status === 'NEW' || l.status === 'PROSPECT' },
   { key: 'CONTACTED', label: '2. Contacted', match: (l: any) => l.status === 'CONTACTED' },
   { key: 'QUALIFIED', label: '3. Qualified', match: (l: any) => l.status === 'QUALIFIED' },
   { key: 'PROPOSAL', label: '4. Proposal Sent', match: (l: any) => l.status === 'PROPOSAL' || l.status === 'REQUIREMENTS_COLLECTED' },
@@ -29,7 +29,7 @@ export default function RepresentativeLeadsPage() {
 
   const [leads, setLeads] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [pipelineStageFilter, setPipelineStageFilter] = useState('ALL');
+  const [stageFilter, setStageFilter] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
 
   const loadLeads = useCallback(async () => {
@@ -76,7 +76,7 @@ export default function RepresentativeLeadsPage() {
   };
 
   // Real search filtering + stage filtering
-  const currentStage = PIPELINE_STAGES.find((s) => s.key === pipelineStageFilter) || PIPELINE_STAGES[0];
+  const currentStage = DEAL_STAGES.find((s) => s.key === stageFilter) || DEAL_STAGES[0];
   const filteredLeads = useMemo(() => {
     return leads.filter((l) => {
       const matchesStage = currentStage.match(l);
@@ -436,13 +436,13 @@ export default function RepresentativeLeadsPage() {
 
           {/* 7-Stage Filter Pills */}
           <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px' }}>
-            {PIPELINE_STAGES.map((s) => {
-              const isSelected = pipelineStageFilter === s.key;
+            {DEAL_STAGES.map((s) => {
+              const isSelected = stageFilter === s.key;
               const count = s.key === 'ALL' ? leads.length : leads.filter((l) => s.match(l)).length;
               return (
                 <button
                   key={s.key}
-                  onClick={() => setPipelineStageFilter(s.key)}
+                  onClick={() => setStageFilter(s.key)}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -484,7 +484,7 @@ export default function RepresentativeLeadsPage() {
             <Building2 size={36} color="var(--cb-text-muted)" style={{ margin: '0 auto 12px auto' }} />
             <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--cb-text-primary)' }}>No clients found</div>
             <p style={{ fontSize: '13px', margin: '4px 0 16px 0', color: 'var(--cb-text-secondary)' }}>
-              {searchQuery ? 'No clients matched your search query.' : 'There are no active clients in this pipeline stage.'}
+              {searchQuery ? 'No clients matched your search query.' : 'There are no active clients in this status stage.'}
             </p>
             <button
               onClick={() => setLeadModalOpen(true)}

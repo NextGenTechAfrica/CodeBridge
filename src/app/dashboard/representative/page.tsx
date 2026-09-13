@@ -470,7 +470,7 @@ export default function RepresentativeOverviewPage() {
         >
           <div>
             <h3 style={{ fontSize: '17px', fontWeight: 800, color: 'var(--cb-text-primary)', margin: 0 }}>
-              Recent Client Pipeline Activity
+              Recent Client Activity
             </h3>
             <p style={{ fontSize: '12px', color: 'var(--cb-text-secondary)', margin: '3px 0 0 0' }}>
               Live prospective client records, service scopes, and stage updates across your territory.
@@ -494,7 +494,7 @@ export default function RepresentativeOverviewPage() {
               transition: 'all 0.15s ease',
             }}
           >
-            Open Clients CRM ({leads.length}) <ArrowRight size={14} />
+            Open My Clients ({leads.length}) <ArrowRight size={14} />
           </Link>
         </div>
 
@@ -539,7 +539,7 @@ export default function RepresentativeOverviewPage() {
                   <th style={{ padding: '12px 20px' }}>Client / Organization</th>
                   <th style={{ padding: '12px 16px' }}>Service Focus</th>
                   <th style={{ padding: '12px 16px' }}>Estimated Budget</th>
-                  <th style={{ padding: '12px 16px' }}>Pipeline Stage</th>
+                  <th style={{ padding: '12px 16px' }}>Current Status</th>
                   <th style={{ padding: '12px 20px', textAlign: 'right' }}>Actions</th>
                 </tr>
               </thead>

@@ -75,13 +75,13 @@ function RepresentativeLayoutContent({ children }: { children: React.ReactNode }
     },
     {
       href: '/dashboard/representative/leads',
-      label: 'Clients CRM',
+      label: 'My Clients',
       icon: Users,
       isActive: pathname.startsWith('/dashboard/representative/leads'),
     },
     {
       href: '/dashboard/representative/pipeline',
-      label: 'Pipeline & Deals',
+      label: 'Deal Progress',
       icon: Layers,
       isActive: pathname.startsWith('/dashboard/representative/pipeline'),
     },
@@ -93,7 +93,7 @@ function RepresentativeLayoutContent({ children }: { children: React.ReactNode }
     },
     {
       href: '/dashboard/representative/performance',
-      label: 'Commission & Results',
+      label: 'My Earnings',
       icon: TrendingUp,
       isActive: pathname.startsWith('/dashboard/representative/performance'),
     },
@@ -101,10 +101,10 @@ function RepresentativeLayoutContent({ children }: { children: React.ReactNode }
 
   // Route Title Mapping
   const getPageTitle = () => {
-    if (pathname.startsWith('/dashboard/representative/leads')) return 'Clients CRM';
-    if (pathname.startsWith('/dashboard/representative/pipeline')) return 'Pipeline Analytics';
-    if (pathname.startsWith('/dashboard/representative/clients')) return 'Client Projects & Accounts';
-    if (pathname.startsWith('/dashboard/representative/performance')) return 'Commercial Performance';
+    if (pathname.startsWith('/dashboard/representative/leads')) return 'My Clients';
+    if (pathname.startsWith('/dashboard/representative/pipeline')) return 'Deal Progress';
+    if (pathname.startsWith('/dashboard/representative/clients')) return 'Active Projects';
+    if (pathname.startsWith('/dashboard/representative/performance')) return 'My Earnings';
     return 'Representative Overview';
   };
 

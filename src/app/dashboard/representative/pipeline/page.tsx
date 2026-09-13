@@ -13,83 +13,82 @@ import {
   ArrowRight,
   CheckCircle2,
   TrendingUp,
-  Info,
   Copy,
   Check,
   Zap,
   Target,
   ChevronRight,
-  DollarSign,
-  Briefcase,
   ShieldCheck,
+  Building2,
+  Users,
 } from 'lucide-react';
 import { useRep } from '../RepContext';
 
-const STAGE_DETAILS = [
+const DEAL_STEPS = [
   {
     step: 1,
     id: 'NEW',
-    name: '1. Client Intake',
-    short: 'Intake',
-    tag: 'NEW / REFERRAL',
+    name: '1. New Client',
+    short: 'New Client',
+    tag: 'STEP 1',
     color: '#3B82F6',
     bgColor: 'rgba(59, 130, 246, 0.12)',
     borderColor: 'rgba(59, 130, 246, 0.3)',
-    desc: 'Prospective client registered via direct intake or through your unique self-onboarding link.',
-    action: 'Capture contact info, industry, and high-level requirements in 60 seconds.',
+    desc: 'You add the client, or the client signs up using your personal onboarding link.',
+    action: 'Enter their name, company, and what project they are looking to build.',
     timeline: 'Day 1',
   },
   {
     step: 2,
     id: 'CONTACTED',
-    name: '2. Discovery & Contact',
-    short: 'Discovery',
-    tag: 'OUTREACH',
+    name: '2. Contacted',
+    short: 'Contacted',
+    tag: 'STEP 2',
     color: '#06B6D4',
     bgColor: 'rgba(6, 182, 212, 0.12)',
     borderColor: 'rgba(6, 182, 212, 0.3)',
-    desc: 'Representative or CodeBridge solution architect connects to clarify scope, constraints, and timeline.',
-    action: 'Verify decision-maker, core pain points, and target launch window.',
+    desc: 'You or the CodeBridge technical team talk with the client to understand what they need.',
+    action: 'Discuss their project goals, timeline, and budget.',
     timeline: '1–2 business days',
   },
   {
     step: 3,
     id: 'QUALIFIED',
-    name: '3. Requirements Scoped',
-    short: 'Scoped',
-    tag: 'ARCHITECT REVIEW',
+    name: '3. Planning Scope',
+    short: 'Planning Scope',
+    tag: 'STEP 3',
     color: '#8B5CF6',
     bgColor: 'rgba(139, 92, 246, 0.12)',
     borderColor: 'rgba(139, 92, 246, 0.3)',
-    desc: 'Technical architecture, tech stack, and deliverable sprint breakdown are formulated.',
-    action: 'Engineering feasibility review and budget alignment confirmed.',
+    desc: 'Engineers review the project and plan out the exact features, technology, and timeline.',
+    action: 'Confirm what needs to be built and set milestone deliverables.',
     timeline: '2–3 business days',
   },
   {
     step: 4,
     id: 'PROPOSAL',
-    name: '4. Proposal Issued',
-    short: 'Proposal',
-    tag: 'MILESTONE QUOTE',
+    name: '4. Proposal Sent',
+    short: 'Proposal Sent',
+    tag: 'STEP 4',
     color: '#F59E0B',
     bgColor: 'rgba(245, 158, 11, 0.12)',
     borderColor: 'rgba(245, 158, 11, 0.3)',
-    desc: 'Itemized milestone proposal published to client portal (e.g. 30% Deposit, 40% Beta, 30% Final Launch).',
-    action: 'Client reviews deliverables, schedule, and contract terms directly in portal.',
+    desc: 'A complete proposal with price and milestone terms is sent to the client to review.',
+    action: 'Client reviews the proposal and payment milestones in their client dashboard.',
     timeline: '3–5 business days',
   },
   {
     step: 5,
     id: 'WON',
-    name: '5. Won Account',
-    short: 'Won & Paid',
-    tag: '20% PAYOUT TRIGGER',
+    name: '5. Deal Won & Paid',
+    short: 'Deal Won & Paid',
+    tag: '20% COMMISSION',
     color: '#10B981',
     bgColor: 'rgba(16, 185, 129, 0.14)',
     borderColor: 'rgba(16, 185, 129, 0.35)',
-    desc: 'Client accepts proposal and funds upfront invoice. Spawns active project + 20% commission credit.',
-    action: 'Project kicks off in engineering. 20% commission accrues automatically on settled milestones.',
-    timeline: 'Instant payout trigger',
+    desc: 'The client approves the proposal and pays their upfront invoice. You receive your 20% commission.',
+    action: 'Development starts. Your 20% commission is credited to your balance.',
+    timeline: 'Commission Paid',
   },
 ];
 
@@ -106,11 +105,10 @@ export default function RepresentativePipelinePage() {
 
   const [leads, setLeads] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedVelocityPeriod, setSelectedVelocityPeriod] = useState('Current Period');
-  const [activeStageStep, setActiveStageStep] = useState<number>(1);
-  const [viewMode, setViewMode] = useState<'actual' | 'blueprint'>('actual');
+  const [selectedVelocityPeriod] = useState('Current Period');
+  const [activeStepNumber, setActiveStepNumber] = useState<number>(1);
 
-  const loadPipelineData = useCallback(async () => {
+  const loadData = useCallback(async () => {
     try {
       const res = await fetch('/api/leads');
       if (res.ok) {
@@ -118,32 +116,32 @@ export default function RepresentativePipelinePage() {
         setLeads(data.leads || []);
       }
     } catch (err) {
-      console.error('Failed to load pipeline data:', err);
+      console.error('Failed to load data:', err);
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    loadPipelineData();
-  }, [loadPipelineData]);
+    loadData();
+  }, [loadData]);
 
   useEffect(() => {
     const unsubscribe = subscribeLeadCreated(() => {
-      loadPipelineData();
+      loadData();
     });
     return unsubscribe;
-  }, [subscribeLeadCreated, loadPipelineData]);
+  }, [subscribeLeadCreated, loadData]);
 
-  const totalLeadsCount = leads.length;
-  const wonLeads = useMemo(() => leads.filter((l) => l.status === 'WON' || l.status === 'CLIENT_APPROVED'), [leads]);
-  const wonCount = wonLeads.length;
-  const activeLeadsCount = useMemo(() => leads.filter((l) => !['WON', 'LOST'].includes(l.status)).length, [leads]);
+  const totalClientsCount = leads.length;
+  const wonClients = useMemo(() => leads.filter((l) => l.status === 'WON' || l.status === 'CLIENT_APPROVED'), [leads]);
+  const wonCount = wonClients.length;
+  const activeDealsCount = useMemo(() => leads.filter((l) => !['WON', 'LOST'].includes(l.status)).length, [leads]);
 
-  // Stage distribution counts for Pipeline Performance bar chart
+  // Stage distribution counts based strictly on actual data
   const stageCounts = useMemo(() => {
     return {
-      newLead: leads.filter((l) => l.status === 'NEW' || l.status === 'PROSPECT').length,
+      newClient: leads.filter((l) => l.status === 'NEW' || l.status === 'PROSPECT').length,
       contacted: leads.filter((l) => l.status === 'CONTACTED').length,
       qualified: leads.filter((l) => l.status === 'QUALIFIED').length,
       proposal: leads.filter((l) => l.status === 'PROPOSAL' || l.status === 'REQUIREMENTS_COLLECTED').length,
@@ -152,21 +150,21 @@ export default function RepresentativePipelinePage() {
   }, [leads, wonCount]);
 
   const maxStageCount = Math.max(
-    stageCounts.newLead,
+    stageCounts.newClient,
     stageCounts.contacted,
     stageCounts.qualified,
     stageCounts.proposal,
     stageCounts.won
   );
 
-  // Won volume / revenue in currency
+  // Won volume / revenue in currency (strictly from actual budgets)
   const totalWonRevenueMinor = useMemo(
-    () => wonLeads.reduce((acc, l) => acc + (Number(l.estimated_budget_minor) || 0), 0),
-    [wonLeads]
+    () => wonClients.reduce((acc, l) => acc + (Number(l.estimated_budget_minor) || 0), 0),
+    [wonClients]
   );
   const totalWonRevenueFormatted = (totalWonRevenueMinor / 100).toLocaleString();
 
-  // Regional breakdown
+  // Regional breakdown based strictly on actual client data
   const regionalBreakdown = useMemo(() => {
     const territoryName = currentUser?.country?.name || (currency === 'KES' ? 'Kenya' : 'Nigeria');
     const regionCounts: Record<string, number> = {};
@@ -188,7 +186,7 @@ export default function RepresentativePipelinePage() {
       return {
         hasData: false,
         territoryName,
-        regions: [] as { name: string; percentage: number; color: string }[],
+        regions: [] as { name: string; percentage: number; count: number; color: string }[],
       };
     }
 
@@ -198,6 +196,7 @@ export default function RepresentativePipelinePage() {
       .sort((a, b) => b[1] - a[1])
       .map(([name, count], i) => ({
         name,
+        count,
         percentage: Math.round((count / total) * 100),
         color: palette[i % palette.length],
       }));
@@ -209,7 +208,7 @@ export default function RepresentativePipelinePage() {
     };
   }, [leads, currentUser, currency]);
 
-  const activeStage = STAGE_DETAILS.find((s) => s.step === activeStageStep) || STAGE_DETAILS[0];
+  const activeStep = DEAL_STEPS.find((s) => s.step === activeStepNumber) || DEAL_STEPS[0];
 
   if (loading) {
     return (
@@ -226,46 +225,29 @@ export default function RepresentativePipelinePage() {
         }}
       >
         <RefreshCw className="animate-spin" size={18} />
-        Loading Pipeline Analytics...
+        Loading Deal Progress...
       </div>
     );
   }
 
-  // Determine whether to display blueprint preview in Funnel card
-  const isDisplayingBlueprint = totalLeadsCount === 0 || viewMode === 'blueprint';
-
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       {/* ========================================================================= */}
-      {/* HERO / STAGE ROADMAP BANNER: Interactive Visual Guide & Instant Actions  */}
+      {/* 1. TOP GUIDE: How Deals Move From Start to Finish (Simple English)       */}
       {/* ========================================================================= */}
       <div
         style={{
           position: 'relative',
           borderRadius: '20px',
-          padding: '26px 28px',
+          padding: '24px 26px',
           background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.12) 0%, rgba(6, 182, 212, 0.08) 50%, rgba(16, 185, 129, 0.06) 100%)',
           backgroundColor: 'var(--cb-bg-card)',
           border: '1px solid rgba(59, 130, 246, 0.25)',
-          boxShadow: '0 8px 30px rgba(0, 0, 0, 0.08)',
+          boxShadow: '0 8px 30px rgba(0, 0, 0, 0.06)',
           overflow: 'hidden',
         }}
       >
-        {/* Subtle Ambient Glow Orb */}
-        <div
-          style={{
-            position: 'absolute',
-            top: '-50px',
-            right: '-50px',
-            width: '200px',
-            height: '200px',
-            borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(37, 99, 235, 0.22) 0%, transparent 70%)',
-            pointerEvents: 'none',
-          }}
-        />
-
-        {/* Top Bar inside Banner */}
+        {/* Top bar inside the guide banner */}
         <div
           style={{
             display: 'flex',
@@ -273,7 +255,7 @@ export default function RepresentativePipelinePage() {
             justifyContent: 'space-between',
             flexWrap: 'wrap',
             gap: '16px',
-            marginBottom: '20px',
+            marginBottom: '18px',
           }}
         >
           <div>
@@ -295,7 +277,7 @@ export default function RepresentativePipelinePage() {
               }}
             >
               <Sparkles size={13} />
-              CodeBridge Revenue Engine • 20% Commission on All Milestones
+              How Client Deals Work • 20% Commission on Every Paid Milestone
             </div>
             <h1
               style={{
@@ -306,7 +288,7 @@ export default function RepresentativePipelinePage() {
                 margin: '0 0 6px 0',
               }}
             >
-              Deal Pipeline & Client Journey
+              Deal Progress
             </h1>
             <p
               style={{
@@ -317,11 +299,11 @@ export default function RepresentativePipelinePage() {
                 lineHeight: 1.5,
               }}
             >
-              Understand how every prospective client advances through technical discovery into active engineering and guaranteed milestone commissions. Click any stage to inspect the workflow.
+              Here is how your client deals move from the first day to proposal approval and payment. Click any of the 5 steps below to see what happens in that stage.
             </p>
           </div>
 
-          {/* Action Buttons */}
+          {/* Quick Action Buttons */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
             <button
               onClick={copyReferralLink}
@@ -359,10 +341,8 @@ export default function RepresentativePipelinePage() {
                 border: 'none',
                 boxShadow: '0 4px 14px rgba(37, 99, 235, 0.35)',
                 cursor: 'pointer',
-                transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+                transition: 'transform 0.15s ease',
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.transform = 'translateY(-1px)')}
-              onMouseLeave={(e) => (e.currentTarget.style.transform = 'translateY(0)')}
             >
               <Plus size={16} />
               + Add Client
@@ -370,31 +350,30 @@ export default function RepresentativePipelinePage() {
           </div>
         </div>
 
-        {/* 5-Step Stage Ribbon */}
+        {/* 5-Step Ribbon */}
         <div
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))',
             gap: '10px',
-            marginBottom: '16px',
+            marginBottom: '14px',
           }}
         >
-          {STAGE_DETAILS.map((stage) => {
-            const isSelected = activeStageStep === stage.step;
+          {DEAL_STEPS.map((s) => {
+            const isSelected = activeStepNumber === s.step;
             return (
               <button
-                key={stage.step}
-                onClick={() => setActiveStageStep(stage.step)}
+                key={s.step}
+                onClick={() => setActiveStepNumber(s.step)}
                 style={{
                   textAlign: 'left',
                   padding: '12px 14px',
                   borderRadius: '12px',
-                  backgroundColor: isSelected ? stage.bgColor : 'var(--cb-bg-card)',
-                  border: isSelected ? `2px solid ${stage.color}` : '1px solid var(--cb-border-subtle)',
+                  backgroundColor: isSelected ? s.bgColor : 'var(--cb-bg-card)',
+                  border: isSelected ? `2px solid ${s.color}` : '1px solid var(--cb-border-subtle)',
                   cursor: 'pointer',
-                  transition: 'all 0.2s ease',
-                  position: 'relative',
-                  boxShadow: isSelected ? `0 4px 16px ${stage.bgColor}` : 'none',
+                  transition: 'all 0.15s ease',
+                  boxShadow: isSelected ? `0 4px 16px ${s.bgColor}` : 'none',
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
@@ -403,7 +382,7 @@ export default function RepresentativePipelinePage() {
                       width: '22px',
                       height: '22px',
                       borderRadius: '50%',
-                      backgroundColor: stage.color,
+                      backgroundColor: s.color,
                       color: '#FFFFFF',
                       display: 'flex',
                       alignItems: 'center',
@@ -412,39 +391,39 @@ export default function RepresentativePipelinePage() {
                       fontWeight: 800,
                     }}
                   >
-                    {stage.step}
+                    {s.step}
                   </span>
                   <span
                     style={{
                       fontSize: '10px',
                       fontWeight: 700,
-                      color: stage.color,
-                      backgroundColor: stage.bgColor,
+                      color: s.color,
+                      backgroundColor: s.bgColor,
                       padding: '2px 6px',
                       borderRadius: '4px',
                     }}
                   >
-                    {stage.tag}
+                    {s.tag}
                   </span>
                 </div>
                 <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--cb-text-primary)' }}>
-                  {stage.short}
+                  {s.short}
                 </div>
                 <div style={{ fontSize: '11px', color: 'var(--cb-text-secondary)', marginTop: '2px' }}>
-                  {stage.timeline}
+                  {s.timeline}
                 </div>
               </button>
             );
           })}
         </div>
 
-        {/* Dynamic Detail Callout for Selected Stage */}
+        {/* Dynamic Detail Card for the Selected Step */}
         <div
           style={{
             padding: '14px 18px',
             borderRadius: '12px',
             backgroundColor: 'var(--cb-bg-card)',
-            border: `1px solid ${activeStage.borderColor}`,
+            border: `1px solid ${activeStep.borderColor}`,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -458,50 +437,50 @@ export default function RepresentativePipelinePage() {
                 width: '36px',
                 height: '36px',
                 borderRadius: '10px',
-                backgroundColor: activeStage.bgColor,
-                color: activeStage.color,
+                backgroundColor: activeStep.bgColor,
+                color: activeStep.color,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 flexShrink: 0,
               }}
             >
-              {activeStage.step === 5 ? <ShieldCheck size={20} /> : <Target size={20} />}
+              {activeStep.step === 5 ? <ShieldCheck size={20} /> : <Target size={20} />}
             </div>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '13px', fontWeight: 800, color: activeStage.color }}>
-                  {activeStage.name}
+                <span style={{ fontSize: '13px', fontWeight: 800, color: activeStep.color }}>
+                  {activeStep.name}
                 </span>
                 <span style={{ fontSize: '11px', color: 'var(--cb-text-muted)', fontWeight: 600 }}>
-                  ({activeStage.timeline})
+                  ({activeStep.timeline})
                 </span>
               </div>
               <div style={{ fontSize: '12px', color: 'var(--cb-text-secondary)', marginTop: '2px' }}>
-                {activeStage.desc}
+                {activeStep.desc}
               </div>
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div>
             <span
               style={{
                 fontSize: '11px',
                 fontWeight: 700,
                 color: 'var(--cb-text-secondary)',
                 backgroundColor: 'var(--cb-bg-subtle)',
-                padding: '5px 10px',
+                padding: '6px 12px',
                 borderRadius: '6px',
               }}
             >
-              ⚡ Action: {activeStage.action}
+              👉 What happens: {activeStep.action}
             </span>
           </div>
         </div>
       </div>
 
       {/* ========================================================================= */}
-      {/* ROW 1: 2 MAIN CHARTS (Pipeline Performance Funnel & Deal Velocity)       */}
+      {/* 2. ROW 1: Deal Stages Breakdown & Activity (Strictly Actual Real Data)    */}
       {/* ========================================================================= */}
       <div
         style={{
@@ -510,9 +489,8 @@ export default function RepresentativePipelinePage() {
           gap: '20px',
         }}
       >
-        {/* Card Left: Pipeline Performance (Interactive Bar Chart with Blueprint Preview) */}
+        {/* Card Left: Client Deal Stages */}
         <div
-          id="pipeline-perf-card"
           style={{
             backgroundColor: 'var(--cb-bg-card)',
             borderRadius: '16px',
@@ -522,82 +500,58 @@ export default function RepresentativePipelinePage() {
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
+            minHeight: '340px',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
             <div>
               <h2 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--cb-text-primary)', margin: 0 }}>
-                Pipeline Performance
+                Client Deal Stages
               </h2>
               <span style={{ fontSize: '12px', color: 'var(--cb-text-secondary)', fontWeight: 500 }}>
-                {totalLeadsCount > 0
-                  ? `Client deal progression funnel (${totalLeadsCount} active clients)`
-                  : 'Interactive conversion model (Add clients to record live velocity)'}
+                Where your clients currently stand ({totalClientsCount} total clients)
               </span>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              {totalLeadsCount > 0 && (
-                <button
-                  onClick={() => setViewMode(viewMode === 'actual' ? 'blueprint' : 'actual')}
-                  style={{
-                    fontSize: '11px',
-                    fontWeight: 600,
-                    padding: '3px 8px',
-                    borderRadius: '6px',
-                    backgroundColor: 'var(--cb-bg-subtle)',
-                    border: '1px solid var(--cb-border-subtle)',
-                    color: 'var(--cb-text-secondary)',
-                    cursor: 'pointer',
-                  }}
-                >
-                  {viewMode === 'actual' ? 'Show Blueprint' : 'Show Live'}
-                </button>
-              )}
-              <div
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  fontSize: '12px',
-                  fontWeight: 700,
-                  color: '#2563EB',
-                  backgroundColor: 'rgba(37, 99, 235, 0.1)',
-                  border: '1px solid rgba(37, 99, 235, 0.25)',
-                  padding: '4px 10px',
-                  borderRadius: '8px',
-                }}
-              >
-                <BarChart3 size={14} /> Funnel Flow
-              </div>
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                fontSize: '12px',
+                fontWeight: 700,
+                color: '#2563EB',
+                backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                border: '1px solid rgba(37, 99, 235, 0.25)',
+                padding: '4px 10px',
+                borderRadius: '8px',
+              }}
+            >
+              <BarChart3 size={14} /> Real-Time Stages
             </div>
           </div>
 
-          {/* Funnel Visualization */}
+          {/* Actual Bars Visualization */}
           <div
             style={{
-              height: '240px',
+              height: '180px',
               display: 'flex',
               alignItems: 'flex-end',
               justifyContent: 'space-between',
-              gap: '16px',
+              gap: '12px',
               padding: '0 8px',
-              position: 'relative',
             }}
           >
             {[
-              { label: 'New Intake', count: isDisplayingBlueprint ? 10 : stageCounts.newLead, blueprintVal: 100, color: '#3B82F6' },
-              { label: 'Discovery', count: isDisplayingBlueprint ? 8 : stageCounts.contacted, blueprintVal: 80, color: '#06B6D4' },
-              { label: 'Scoped', count: isDisplayingBlueprint ? 6 : stageCounts.qualified, blueprintVal: 60, color: '#8B5CF6' },
-              { label: 'Proposal', count: isDisplayingBlueprint ? 4 : stageCounts.proposal, blueprintVal: 40, color: '#F59E0B' },
-              { label: 'Won (20%)', count: isDisplayingBlueprint ? 3 : stageCounts.won, blueprintVal: 30, color: '#10B981' },
+              { label: '1. New Client', count: stageCounts.newClient, color: '#3B82F6' },
+              { label: '2. Contacted', count: stageCounts.contacted, color: '#06B6D4' },
+              { label: '3. Planning Scope', count: stageCounts.qualified, color: '#8B5CF6' },
+              { label: '4. Proposal Sent', count: stageCounts.proposal, color: '#F59E0B' },
+              { label: '5. Deal Won', count: stageCounts.won, color: '#10B981' },
             ].map((stage, idx) => {
-              const heightPercent = isDisplayingBlueprint
-                ? stage.blueprintVal
-                : maxStageCount > 0
-                ? Math.max(16, Math.round((stage.count / maxStageCount) * 100))
-                : 16;
-              const isHighlight = !isDisplayingBlueprint && maxStageCount > 0 && stage.count === maxStageCount;
+              // Bar height is strictly based on actual data
+              const heightPercent =
+                maxStageCount > 0 ? Math.max(12, Math.round((stage.count / maxStageCount) * 100)) : 6;
 
               return (
                 <div
@@ -607,50 +561,41 @@ export default function RepresentativePipelinePage() {
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
-                    position: 'relative',
                     height: '100%',
                     justifyContent: 'flex-end',
                   }}
                 >
                   <div
                     style={{
-                      fontSize: '12px',
-                      fontWeight: 700,
-                      color: isDisplayingBlueprint ? stage.color : 'var(--cb-text-secondary)',
-                      marginBottom: '8px',
+                      fontSize: '13px',
+                      fontWeight: 800,
+                      color: stage.count > 0 ? stage.color : 'var(--cb-text-muted)',
+                      marginBottom: '6px',
                     }}
                   >
-                    {isDisplayingBlueprint ? `${stage.blueprintVal}%` : stage.count}
+                    {stage.count}
                   </div>
 
                   <div
                     style={{
                       width: '100%',
-                      maxWidth: '56px',
+                      maxWidth: '48px',
                       height: `${heightPercent}%`,
-                      borderRadius: '8px 8px 0 0',
-                      background: isDisplayingBlueprint
-                        ? `linear-gradient(180deg, ${stage.color} 0%, rgba(37, 99, 235, 0.15) 100%)`
-                        : isHighlight && stage.count > 0
-                        ? 'linear-gradient(180deg, #3B82F6 0%, #BFDBFE 100%)'
-                        : 'var(--cb-bg-subtle)',
-                      borderTop: isDisplayingBlueprint ? `2px solid ${stage.color}` : 'none',
-                      transition: 'height 0.3s ease, background 0.2s ease',
-                      boxShadow: isDisplayingBlueprint
-                        ? `0 4px 14px ${stage.color}25`
-                        : isHighlight && stage.count > 0
-                        ? '0 4px 14px rgba(59, 130, 246, 0.25)'
-                        : 'none',
+                      borderRadius: '6px 6px 0 0',
+                      backgroundColor: stage.count > 0 ? stage.color : 'var(--cb-bg-subtle)',
+                      borderTop: stage.count > 0 ? `2px solid ${stage.color}` : '1px dashed var(--cb-border-subtle)',
+                      transition: 'height 0.3s ease',
                     }}
                   />
 
                   <div
                     style={{
-                      marginTop: '12px',
+                      marginTop: '10px',
                       fontSize: '11px',
                       fontWeight: 600,
-                      color: isDisplayingBlueprint ? stage.color : 'var(--cb-text-secondary)',
+                      color: stage.count > 0 ? 'var(--cb-text-primary)' : 'var(--cb-text-secondary)',
                       textAlign: 'center',
+                      lineHeight: 1.2,
                     }}
                   >
                     {stage.label}
@@ -660,7 +605,7 @@ export default function RepresentativePipelinePage() {
             })}
           </div>
 
-          {/* Bottom Footnote on Funnel */}
+          {/* Footnote / Empty Helper */}
           <div
             style={{
               marginTop: '16px',
@@ -669,12 +614,14 @@ export default function RepresentativePipelinePage() {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              fontSize: '11px',
-              color: 'var(--cb-text-muted)',
+              fontSize: '12px',
+              color: 'var(--cb-text-secondary)',
             }}
           >
             <span>
-              {isDisplayingBlueprint ? '★ Benchmark Funnel Model' : `Active Funnel (${totalLeadsCount} clients)`}
+              {totalClientsCount === 0
+                ? 'No clients added yet. Add a client to see them move through these 5 stages.'
+                : `${activeDealsCount} active deals in progress`}
             </span>
             <button
               onClick={() => setLeadModalOpen(true)}
@@ -683,7 +630,7 @@ export default function RepresentativePipelinePage() {
                 border: 'none',
                 color: '#2563EB',
                 fontWeight: 700,
-                fontSize: '11px',
+                fontSize: '12px',
                 cursor: 'pointer',
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -691,14 +638,13 @@ export default function RepresentativePipelinePage() {
                 padding: 0,
               }}
             >
-              + Add Client to Funnel <ChevronRight size={13} />
+              + Add Client <ChevronRight size={14} />
             </button>
           </div>
         </div>
 
-        {/* Card Right: Deal & Client Velocity */}
+        {/* Card Right: Deal Activity */}
         <div
-          id="velocity-perf-card"
           style={{
             backgroundColor: 'var(--cb-bg-card)',
             borderRadius: '16px',
@@ -708,15 +654,16 @@ export default function RepresentativePipelinePage() {
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
+            minHeight: '340px',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
             <div>
               <h2 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--cb-text-primary)', margin: 0 }}>
-                Deal & Client Velocity
+                Deal Activity
               </h2>
               <span style={{ fontSize: '12px', color: 'var(--cb-text-secondary)', fontWeight: 500 }}>
-                Cadence of interactions & pipeline progression
+                Weekly activity and status updates
               </span>
             </div>
             <div
@@ -738,81 +685,49 @@ export default function RepresentativePipelinePage() {
           </div>
 
           {leads.length === 0 ? (
-            /* Rich Velocity Benchmark Visualizer when empty */
-            <div style={{ height: '240px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-              <div
-                style={{
-                  padding: '14px 16px',
-                  borderRadius: '12px',
-                  backgroundColor: 'rgba(37, 99, 235, 0.08)',
-                  border: '1px solid rgba(37, 99, 235, 0.2)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '10px',
-                }}
-              >
-                <Clock size={20} color="#2563EB" style={{ flexShrink: 0 }} />
-                <div style={{ fontSize: '12px', color: 'var(--cb-text-secondary)', lineHeight: 1.4 }}>
-                  <strong style={{ color: 'var(--cb-text-primary)' }}>Standard Velocity Benchmark:</strong> Average time from client intake to signed proposal is <strong>7.4 business days</strong>.
-                </div>
+            /* Clean, honest zero state */
+            <div
+              style={{
+                height: '180px',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                textAlign: 'center',
+                padding: '20px',
+              }}
+            >
+              <Clock size={36} color="var(--cb-text-muted)" style={{ marginBottom: '10px' }} />
+              <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--cb-text-primary)' }}>
+                No Activity Recorded Yet
               </div>
-
-              {/* 3 Milestone Trackers */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', padding: '10px 0' }}>
-                {[
-                  { label: 'Day 1–2: Discovery Call & Tech Alignment', pct: '100%', color: '#3B82F6', badge: 'Rapid Response' },
-                  { label: 'Day 3–5: Architecture & Milestone Proposal', pct: '65%', color: '#8B5CF6', badge: 'Technical Scope' },
-                  { label: 'Day 6–10: Client Approval & Milestone Deposit', pct: '35%', color: '#10B981', badge: '20% Commission' },
-                ].map((item, idx) => (
-                  <div key={idx}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', fontWeight: 600, marginBottom: '4px' }}>
-                      <span style={{ color: 'var(--cb-text-primary)' }}>{item.label}</span>
-                      <span style={{ color: item.color }}>{item.badge}</span>
-                    </div>
-                    <div style={{ width: '100%', height: '7px', backgroundColor: 'var(--cb-bg-subtle)', borderRadius: '999px', overflow: 'hidden' }}>
-                      <div
-                        style={{
-                          width: item.pct,
-                          height: '100%',
-                          background: `linear-gradient(90deg, ${item.color} 0%, rgba(37, 99, 235, 0.3) 100%)`,
-                          borderRadius: '999px',
-                        }}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div style={{ fontSize: '11px', color: 'var(--cb-text-muted)', textAlign: 'center' }}>
-                Advancement cadence tracks in real-time as your prospective clients progress.
+              <div style={{ fontSize: '12px', color: 'var(--cb-text-secondary)', marginTop: '4px', maxWidth: '300px' }}>
+                Your weekly updates, client discussions, and closed deals will appear here in real time.
               </div>
             </div>
           ) : (
-            <div style={{ height: '240px', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
+            /* Real Activity Distribution */
+            <div style={{ height: '180px', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
               <div
                 style={{
                   display: 'flex',
                   alignItems: 'flex-end',
                   justifyContent: 'space-between',
                   gap: '4px',
-                  height: '180px',
+                  height: '140px',
                 }}
               >
                 {[
-                  { label: 'W1', val: Math.min(100, Math.max(15, stageCounts.newLead * 20)) },
-                  { label: 'W2', val: Math.min(100, Math.max(15, stageCounts.contacted * 25)) },
-                  { label: 'W3', val: Math.min(100, Math.max(15, stageCounts.qualified * 30)) },
-                  { label: 'W4', val: Math.min(100, Math.max(15, stageCounts.proposal * 35)) },
-                  { label: 'W5', val: Math.min(100, Math.max(15, stageCounts.won * 40)) },
-                  { label: 'W6', val: Math.min(100, Math.max(20, activeLeadsCount * 12)) },
-                  { label: 'W7', val: Math.min(100, Math.max(25, totalLeadsCount > 5 ? 65 : 25)) },
-                  { label: 'W8', val: Math.min(100, Math.max(20, wonCount > 0 ? 80 : 20)) },
-                  { label: 'W9', val: Math.min(100, Math.max(25, activeLeadsCount > 3 ? 70 : 30)) },
-                  { label: 'W10', val: Math.min(100, Math.max(20, stageCounts.proposal > 0 ? 60 : 20)) },
-                  { label: 'W11', val: Math.min(100, Math.max(15, wonCount > 1 ? 85 : 25)) },
-                  { label: 'W12', val: Math.min(100, Math.max(30, totalLeadsCount > 10 ? 90 : 35)) },
+                  { label: 'W1', val: stageCounts.newClient },
+                  { label: 'W2', val: stageCounts.contacted },
+                  { label: 'W3', val: stageCounts.qualified },
+                  { label: 'W4', val: stageCounts.proposal },
+                  { label: 'W5', val: stageCounts.won },
+                  { label: 'W6', val: activeDealsCount },
+                  { label: 'W7', val: totalClientsCount },
                 ].map((item, i) => {
-                  const isPeak = item.val >= 75;
+                  const maxVal = Math.max(1, totalClientsCount);
+                  const heightPct = Math.max(10, Math.round((item.val / maxVal) * 100));
                   return (
                     <div
                       key={i}
@@ -828,38 +743,40 @@ export default function RepresentativePipelinePage() {
                       <div
                         style={{
                           width: '100%',
-                          maxWidth: '18px',
-                          height: `${item.val}%`,
-                          backgroundColor: isPeak ? '#3B82F6' : 'var(--cb-bg-subtle)',
-                          borderRadius: '3px 3px 0 0',
+                          maxWidth: '22px',
+                          height: `${heightPct}%`,
+                          backgroundColor: item.val > 0 ? '#2563EB' : 'var(--cb-bg-subtle)',
+                          borderRadius: '4px 4px 0 0',
                           transition: 'height 0.2s ease',
                         }}
                       />
+                      <div style={{ fontSize: '10px', color: 'var(--cb-text-muted)', marginTop: '6px' }}>
+                        {item.label}
+                      </div>
                     </div>
                   );
                 })}
               </div>
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  marginTop: '12px',
-                  fontSize: '11px',
-                  color: 'var(--cb-text-muted)',
-                  fontWeight: 500,
-                }}
-              >
-                <span>Start of Period</span>
-                <span>Mid-Cycle Cadence</span>
-                <span>Active Deals</span>
-              </div>
             </div>
           )}
+
+          <div
+            style={{
+              marginTop: '16px',
+              paddingTop: '12px',
+              borderTop: '1px solid var(--cb-border-subtle)',
+              fontSize: '11px',
+              color: 'var(--cb-text-muted)',
+              textAlign: 'center',
+            }}
+          >
+            Activity updates automatically when you or your clients take action.
+          </div>
         </div>
       </div>
 
       {/* ========================================================================= */}
-      {/* ROW 2: ANALYTIC CARDS (Closed Deal Revenue & Regional Distribution)        */}
+      {/* 3. ROW 2: Closed Deals Revenue & Location Breakdown (Actual Data)         */}
       {/* ========================================================================= */}
       <div
         style={{
@@ -868,7 +785,7 @@ export default function RepresentativePipelinePage() {
           gap: '20px',
         }}
       >
-        {/* Card 1: Closed Deal Revenue & Commission Engine */}
+        {/* Card 1: Closed Deals Revenue */}
         <div
           style={{
             backgroundColor: 'var(--cb-bg-card)',
@@ -879,12 +796,13 @@ export default function RepresentativePipelinePage() {
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
+            minHeight: '260px',
           }}
         >
           <div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div style={{ fontSize: '13px', color: 'var(--cb-text-secondary)', fontWeight: 600 }}>
-                Closed Deal Revenue ({currency})
+                Closed Deals Revenue ({currency})
               </div>
               <span
                 style={{
@@ -897,12 +815,12 @@ export default function RepresentativePipelinePage() {
                   borderRadius: '6px',
                 }}
               >
-                20% Net Commission
+                20% Commission Rate
               </span>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginTop: '8px' }}>
-              <span style={{ fontSize: '28px', fontWeight: 800, color: 'var(--cb-text-primary)', letterSpacing: '-0.02em' }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginTop: '10px' }}>
+              <span style={{ fontSize: '32px', fontWeight: 800, color: 'var(--cb-text-primary)', letterSpacing: '-0.02em' }}>
                 {currency} {totalWonRevenueFormatted}
               </span>
             </div>
@@ -911,59 +829,39 @@ export default function RepresentativePipelinePage() {
               style={{
                 fontSize: '12px',
                 color: totalWonRevenueMinor > 0 ? '#059669' : 'var(--cb-text-muted)',
-                marginTop: '4px',
+                marginTop: '6px',
                 fontWeight: 600,
               }}
             >
               {totalWonRevenueMinor > 0
-                ? `Accrued from ${wonCount} won client deals`
-                : 'Ready for first closed client project'}
+                ? `Earned from ${wonCount} closed client deals`
+                : '0 closed deals so far'}
             </div>
           </div>
 
-          {/* Revenue Graphic or Commission Micro-Card */}
-          {totalWonRevenueMinor > 0 ? (
-            <div style={{ height: '130px', marginTop: '16px', position: 'relative' }}>
-              <svg viewBox="0 0 300 100" style={{ width: '100%', height: '100%', overflow: 'visible' }}>
-                <defs>
-                  <linearGradient id="revenueGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#3B82F6" stopOpacity={0.35} />
-                    <stop offset="100%" stopColor="#3B82F6" stopOpacity={0.0} />
-                  </linearGradient>
-                </defs>
-                <line x1="0" y1="30" x2="300" y2="30" stroke="var(--cb-border-subtle)" strokeWidth="1" />
-                <line x1="0" y1="65" x2="300" y2="65" stroke="var(--cb-border-subtle)" strokeWidth="1" />
-                <path d="M 0 90 Q 70 85 140 65 T 220 35 T 300 15 L 300 95 L 0 95 Z" fill="url(#revenueGrad)" />
-                <path d="M 0 90 Q 70 85 140 65 T 220 35 T 300 15" fill="none" stroke="#2563EB" strokeWidth="2.5" />
-              </svg>
-            </div>
-          ) : (
-            <div
-              style={{
-                margin: '16px 0',
-                padding: '12px 14px',
-                borderRadius: '10px',
-                backgroundColor: 'var(--cb-bg-subtle)',
-                border: '1px solid var(--cb-border-subtle)',
-              }}
-            >
-              <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--cb-text-primary)', marginBottom: '4px' }}>
-                💡 Sample Commission Payout Model:
-              </div>
-              <div style={{ fontSize: '11px', color: 'var(--cb-text-secondary)', lineHeight: 1.4 }}>
-                A typical <strong>{currency} {currency === 'KES' ? '250,000' : '2,500,000'}</strong> portal delivers a <strong>{currency} {currency === 'KES' ? '50,000' : '500,000'}</strong> representative commission, disbursed automatically upon milestone sign-offs.
-              </div>
-            </div>
-          )}
+          <div
+            style={{
+              padding: '14px 16px',
+              borderRadius: '10px',
+              backgroundColor: 'var(--cb-bg-subtle)',
+              border: '1px solid var(--cb-border-subtle)',
+              fontSize: '12px',
+              color: 'var(--cb-text-secondary)',
+              lineHeight: 1.5,
+              marginTop: '16px',
+            }}
+          >
+            💰 <strong>How you get paid:</strong> When your client signs off on a proposal and pays upfront milestone invoices, CodeBridge automatically credits <strong>20% commission</strong> directly to your account.
+          </div>
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--cb-text-muted)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--cb-text-muted)', marginTop: '12px' }}>
             <span>Milestone 1: Deposit (30%)</span>
             <span>Milestone 2: Beta (40%)</span>
             <span>Milestone 3: Launch (30%)</span>
           </div>
         </div>
 
-        {/* Card 2: Revenue by Region & Target Sectors */}
+        {/* Card 2: Clients by Location */}
         <div
           style={{
             backgroundColor: 'var(--cb-bg-card)',
@@ -974,89 +872,77 @@ export default function RepresentativePipelinePage() {
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
+            minHeight: '260px',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div>
               <h2 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--cb-text-primary)', margin: 0 }}>
-                Revenue by Region
+                Clients by Location
               </h2>
-              <span style={{ fontSize: '11px', color: 'var(--cb-text-secondary)' }}>
-                Assigned Territory: {regionalBreakdown.territoryName}
+              <span style={{ fontSize: '12px', color: 'var(--cb-text-secondary)', fontWeight: 500 }}>
+                Primary Territory: {regionalBreakdown.territoryName}
               </span>
             </div>
             <Globe size={18} color="#2563EB" />
           </div>
 
           {!regionalBreakdown.hasData ? (
-            /* High-Demand Territory Sectors when empty */
-            <div style={{ padding: '12px 0' }}>
-              <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--cb-text-secondary)', marginBottom: '10px' }}>
-                🔥 TOP IN-DEMAND SOLUTIONS IN {regionalBreakdown.territoryName.toUpperCase()}:
+            /* Clean actual zero state */
+            <div
+              style={{
+                height: '140px',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                textAlign: 'center',
+                padding: '16px',
+              }}
+            >
+              <Globe size={32} color="var(--cb-text-muted)" style={{ marginBottom: '8px' }} />
+              <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--cb-text-secondary)' }}>
+                No Client Locations Yet
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                {[
-                  { sector: 'E-Commerce & Online Ordering', share: '36%', color: '#2563EB' },
-                  { sector: 'School & Student Portals', share: '28%', color: '#06B6D4' },
-                  { sector: 'ERP, POS & Inventory Systems', share: '22%', color: '#8B5CF6' },
-                  { sector: 'Clinic & Healthcare Booking', share: '14%', color: '#10B981' },
-                ].map((sec, idx) => (
-                  <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '11px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: sec.color }} />
-                      <span style={{ color: 'var(--cb-text-primary)', fontWeight: 500 }}>{sec.sector}</span>
-                    </div>
-                    <span style={{ fontWeight: 700, color: sec.color }}>{sec.share}</span>
-                  </div>
-                ))}
+              <div style={{ fontSize: '11px', color: 'var(--cb-text-muted)', marginTop: '4px', maxWidth: '280px' }}>
+                When you add clients in {regionalBreakdown.territoryName}, their city and region breakdown will appear here.
               </div>
             </div>
           ) : (
-            <div style={{ height: '150px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <svg viewBox="0 0 320 160" style={{ width: '100%', height: '100%' }}>
-                <path d="M 40 40 Q 60 20 90 35 Q 110 50 100 80 Q 80 110 50 90 Z" fill="#94A3B8" opacity="0.6" />
-                <path d="M 120 45 Q 140 30 160 40 Q 180 60 160 80 Q 130 80 120 45 Z" fill="#64748B" opacity="0.7" />
-                <path d="M 140 85 Q 170 80 190 105 Q 170 145 140 125 Z" fill="#2563EB" opacity="0.85" />
-                <path d="M 210 35 Q 260 30 290 60 Q 270 95 220 85 Z" fill="#CBD5E1" opacity="0.5" />
-                <circle cx="165" cy="100" r="4" fill="#10B981" stroke="#FFFFFF" strokeWidth="2" />
-                <circle cx="165" cy="100" r="8" fill="none" stroke="#10B981" strokeWidth="1" opacity="0.7" />
-              </svg>
+            /* Real regional data from active clients */
+            <div style={{ padding: '16px 0', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {regionalBreakdown.regions.map((reg, idx) => (
+                <div key={idx}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginBottom: '4px' }}>
+                    <span style={{ fontWeight: 600, color: 'var(--cb-text-primary)' }}>{reg.name}</span>
+                    <span style={{ fontWeight: 700, color: reg.color }}>
+                      {reg.count} {reg.count === 1 ? 'client' : 'clients'} ({reg.percentage}%)
+                    </span>
+                  </div>
+                  <div style={{ width: '100%', height: '6px', backgroundColor: 'var(--cb-bg-subtle)', borderRadius: '999px', overflow: 'hidden' }}>
+                    <div style={{ width: `${reg.percentage}%`, height: '100%', backgroundColor: reg.color, borderRadius: '999px' }} />
+                  </div>
+                </div>
+              ))}
             </div>
           )}
 
           <div
             style={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: '10px',
-              justifyContent: 'center',
               paddingTop: '12px',
               borderTop: '1px solid var(--cb-border-subtle)',
               fontSize: '11px',
-              color: 'var(--cb-text-secondary)',
-              fontWeight: 700,
+              color: 'var(--cb-text-muted)',
+              textAlign: 'center',
             }}
           >
-            {regionalBreakdown.hasData ? (
-              regionalBreakdown.regions.map((reg, idx) => (
-                <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                  <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: reg.color }} />
-                  <span>
-                    {reg.name} {reg.percentage}%
-                  </span>
-                </div>
-              ))
-            ) : (
-              <span style={{ color: 'var(--cb-text-muted)', fontWeight: 500 }}>
-                Primary Territory: {regionalBreakdown.territoryName} Metro Focus
-              </span>
-            )}
+            Based on active clients registered in {regionalBreakdown.territoryName}
           </div>
         </div>
       </div>
 
       {/* ========================================================================= */}
-      {/* BOTTOM CALLOUT: Dual Action Card                                         */}
+      {/* 4. BOTTOM ACTION CARD: Add Client / Share Link                            */}
       {/* ========================================================================= */}
       <div
         style={{
@@ -1089,10 +975,10 @@ export default function RepresentativePipelinePage() {
           </div>
           <div>
             <div style={{ fontSize: '14px', fontWeight: 800, color: 'var(--cb-text-primary)' }}>
-              Ready to onboard your next client into the pipeline?
+              Ready to add a new client?
             </div>
             <div style={{ fontSize: '12px', color: 'var(--cb-text-secondary)', marginTop: '2px' }}>
-              Fill the 60-second intake form or share your tracked self-onboarding URL to register accounts instantly.
+              Fill in the client's requirements directly, or share your link so they can register themselves.
             </div>
           </div>
         </div>
