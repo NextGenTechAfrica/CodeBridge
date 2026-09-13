@@ -11,56 +11,28 @@ import {
   ArrowRight,
   RefreshCw,
   Sparkles,
+  Building2,
+  MessageSquare,
+  Plus,
 } from 'lucide-react';
 import { useRep } from './RepContext';
-import EarningsSummaryCard from '@/components/dashboard/representative/EarningsSummaryCard';
 import ReferralBanner from '@/components/dashboard/representative/ReferralBanner';
 
 export default function RepresentativeOverviewPage() {
-  const { currentUser, currency, subscribeLeadCreated } = useRep();
+  const { currentUser, currency, setLeadModalOpen, openChat, subscribeLeadCreated } = useRep();
 
   const [leads, setLeads] = useState<any[]>([]);
-  const [financialSummary, setFinancialSummary] = useState({
-    totalEarnedMinor: 0,
-    totalPaidMinor: 0,
-    totalPendingMinor: 0,
-    recoveryBalanceMinor: 0,
-    netPayableMinor: 0,
-    currency: 'KES',
-  });
-  const [payoutSettings, setPayoutSettings] = useState<any>({
-    currency: 'KES',
-    method: 'MPESA',
-    destination: '',
-    bankCode: 'MPS',
-    accountName: '',
-    referralCode: 'KEN-001',
-  });
   const [loading, setLoading] = useState(true);
 
   const loadOverviewData = useCallback(async () => {
     try {
-      const [resLeads, resComms] = await Promise.all([
-        fetch('/api/leads'),
-        fetch('/api/representative/commissions'),
-      ]);
-
+      const resLeads = await fetch('/api/leads');
       if (resLeads.ok) {
         const d = await resLeads.json();
         setLeads(d.leads || []);
       }
-
-      if (resComms.ok) {
-        const commData = await resComms.json();
-        if (commData.summary) {
-          setFinancialSummary(commData.summary);
-        }
-        if (commData.payoutSettings) {
-          setPayoutSettings(commData.payoutSettings);
-        }
-      }
     } catch (err) {
-      console.error('Failed to load representative overview data:', err);
+      console.error('Failed to load representative leads data:', err);
     } finally {
       setLoading(false);
     }
@@ -100,19 +72,20 @@ export default function RepresentativeOverviewPage() {
           alignItems: 'center',
           justifyContent: 'center',
           padding: '60px',
-          color: '#64748B',
+          color: 'var(--cb-text-secondary)',
           fontSize: '14px',
           fontWeight: 600,
           gap: '10px',
         }}
       >
         <RefreshCw className="animate-spin" size={18} />
-        Loading Sales Metrics...
+        Loading Territory Overview...
       </div>
     );
   }
 
   const repFirstName = currentUser?.firstName || currentUser?.name?.split(' ')[0] || 'Representative';
+  const recentLeads = leads.slice(0, 5);
 
   return (
     <div>
@@ -148,57 +121,55 @@ export default function RepresentativeOverviewPage() {
                 borderRadius: '6px',
               }}
             >
-              <Sparkles size={12} /> Active Territory
+              <Sparkles size={12} /> REFERRED TERRITORY
             </span>
             <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--cb-text-secondary)' }}>
-              {currentUser?.country?.name || (currency === 'KES' ? 'Kenya' : 'Nigeria')}
+              {currentUser?.country?.name || 'Assigned Territory'} Metro
             </span>
           </div>
-          <h2 style={{ fontSize: '20px', fontWeight: 800, color: 'var(--cb-text-primary)', margin: 0, letterSpacing: '-0.02em' }}>
+          <h1
+            style={{
+              fontSize: '22px',
+              fontWeight: 800,
+              color: 'var(--cb-text-primary)',
+              letterSpacing: '-0.02em',
+              margin: 0,
+            }}
+          >
             Welcome back, {repFirstName}
-          </h2>
-          <p style={{ fontSize: '13px', color: 'var(--cb-text-secondary)', margin: '4px 0 0 0' }}>
-            Here is an overview of your territory leads, active pipeline cadence, and commission disbursements.
+          </h1>
+          <p
+            style={{
+              fontSize: '13px',
+              color: 'var(--cb-text-secondary)',
+              margin: '4px 0 0 0',
+            }}
+          >
+            Manage your regional business clients, follow up with qualified leads, and track project commissions.
           </p>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <Link
-            href="/dashboard/representative/leads"
+          <button
+            onClick={() => setLeadModalOpen(true)}
             style={{
               display: 'inline-flex',
               alignItems: 'center',
               gap: '6px',
-              padding: '9px 16px',
+              padding: '10px 20px',
               borderRadius: '24px',
               backgroundColor: '#2563EB',
               color: '#FFFFFF',
+              border: 'none',
               fontSize: '13px',
-              fontWeight: 600,
-              textDecoration: 'none',
+              fontWeight: 700,
+              cursor: 'pointer',
               boxShadow: '0 2px 8px rgba(37, 99, 235, 0.25)',
+              transition: 'all 0.15s ease',
             }}
           >
-            <Users size={14} /> View Leads Roster
-          </Link>
-          <Link
-            href="/dashboard/representative/pipeline"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '9px 16px',
-              borderRadius: '24px',
-              backgroundColor: 'var(--cb-bg-card)',
-              color: 'var(--cb-text-primary)',
-              border: '1px solid var(--cb-border-subtle)',
-              fontSize: '13px',
-              fontWeight: 600,
-              textDecoration: 'none',
-            }}
-          >
-            <Layers size={14} color="var(--cb-text-secondary)" /> Pipeline Funnel
-          </Link>
+            <Plus size={15} /> Add Sales Lead
+          </button>
         </div>
       </div>
 
@@ -441,214 +412,196 @@ export default function RepresentativeOverviewPage() {
       </div>
 
       {/* ========================================================================= */}
-      {/* CONSOLIDATED EARNINGS & COMMISSION SUMMARY CARD                           */}
-      {/* ========================================================================= */}
-      <EarningsSummaryCard financialSummary={financialSummary} payoutSettings={payoutSettings} />
-
-      {/* ========================================================================= */}
       {/* 20% COMMISSION REFERRAL LINK BANNER                                       */}
       {/* ========================================================================= */}
       <ReferralBanner />
 
-      {/* Quick Navigation Cards */}
+      {/* Recent Territory Leads Table (Operational Hub) */}
       <div
         style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-          gap: '20px',
+          backgroundColor: 'var(--cb-bg-card)',
+          borderRadius: '16px',
+          border: '1px solid var(--cb-border-subtle)',
+          boxShadow: 'var(--cb-shadow-sm, 0 1px 3px rgba(0,0,0,0.02))',
+          overflow: 'hidden',
+          marginBottom: '32px',
         }}
       >
-        <Link
-          href="/dashboard/representative/leads"
-          style={{ textDecoration: 'none', color: 'inherit' }}
+        <div
+          style={{
+            padding: '20px 24px',
+            borderBottom: '1px solid var(--cb-border-subtle)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '12px',
+          }}
         >
-          <div
-            style={{
-              backgroundColor: '#FFFFFF',
-              borderRadius: '16px',
-              padding: '24px',
-              border: '1px solid #E2E8F0',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
-              transition: 'all 0.15s ease',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = '#BFDBFE';
-              e.currentTarget.style.boxShadow = '0 6px 20px rgba(37, 99, 235, 0.08)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = '#E2E8F0';
-              e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.02)';
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-              <div
-                style={{
-                  width: '38px',
-                  height: '38px',
-                  borderRadius: '10px',
-                  backgroundColor: '#EFF6FF',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: '#2563EB',
-                }}
-              >
-                <Users size={20} />
-              </div>
-              <div>
-                <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#0F172A', margin: 0 }}>
-                  Leads & CRM Management
-                </h3>
-                <p style={{ fontSize: '12px', color: '#64748B', margin: '2px 0 0 0' }}>
-                  {totalLeadsCount} registered leads in territory
-                </p>
-              </div>
-            </div>
-            <p style={{ fontSize: '13px', color: '#475569', lineHeight: 1.5, margin: '0 0 16px 0' }}>
-              Manage stage progression from New to Closed Won, communicate with prospective clients, and update scopes.
+          <div>
+            <h3 style={{ fontSize: '16px', fontWeight: 800, color: 'var(--cb-text-primary)', margin: 0 }}>
+              Recent Territory Activity
+            </h3>
+            <p style={{ fontSize: '12px', color: 'var(--cb-text-secondary)', margin: '3px 0 0 0' }}>
+              Latest prospective client engagements and stage updates in your market.
             </p>
-            <div
-              style={{
-                fontSize: '13px',
-                fontWeight: 700,
-                color: '#2563EB',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-              }}
-            >
-              Open Leads Console <ArrowRight size={14} />
-            </div>
           </div>
-        </Link>
 
-        <Link
-          href="/dashboard/representative/pipeline"
-          style={{ textDecoration: 'none', color: 'inherit' }}
-        >
-          <div
+          <Link
+            href="/dashboard/representative/leads"
             style={{
-              backgroundColor: '#FFFFFF',
-              borderRadius: '16px',
-              padding: '24px',
-              border: '1px solid #E2E8F0',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
-              transition: 'all 0.15s ease',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = '#BFDBFE';
-              e.currentTarget.style.boxShadow = '0 6px 20px rgba(37, 99, 235, 0.08)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = '#E2E8F0';
-              e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.02)';
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              fontSize: '13px',
+              fontWeight: 700,
+              color: '#2563EB',
+              textDecoration: 'none',
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-              <div
-                style={{
-                  width: '38px',
-                  height: '38px',
-                  borderRadius: '10px',
-                  backgroundColor: '#EFF6FF',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: '#2563EB',
-                }}
-              >
-                <Layers size={20} />
-              </div>
-              <div>
-                <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#0F172A', margin: 0 }}>
-                  Pipeline Performance & Funnel
-                </h3>
-                <p style={{ fontSize: '12px', color: '#64748B', margin: '2px 0 0 0' }}>
-                  {currency} {totalWonRevenueFormatted} won deal volume
-                </p>
-              </div>
-            </div>
-            <p style={{ fontSize: '13px', color: '#475569', lineHeight: 1.5, margin: '0 0 16px 0' }}>
-              Analyze funnel throughput, track deal cadence velocity across intervals, and review regional settlement distribution.
-            </p>
-            <div
-              style={{
-                fontSize: '13px',
-                fontWeight: 700,
-                color: '#2563EB',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-              }}
-            >
-              View Pipeline Analytics <ArrowRight size={14} />
-            </div>
-          </div>
-        </Link>
+            View All Leads ({leads.length}) <ArrowRight size={14} />
+          </Link>
+        </div>
 
-        <Link
-          href="/dashboard/representative/performance"
-          style={{ textDecoration: 'none', color: 'inherit' }}
-        >
-          <div
-            style={{
-              backgroundColor: '#FFFFFF',
-              borderRadius: '16px',
-              padding: '24px',
-              border: '1px solid #E2E8F0',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
-              transition: 'all 0.15s ease',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = '#BFDBFE';
-              e.currentTarget.style.boxShadow = '0 6px 20px rgba(37, 99, 235, 0.08)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = '#E2E8F0';
-              e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.02)';
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-              <div
-                style={{
-                  width: '38px',
-                  height: '38px',
-                  borderRadius: '10px',
-                  backgroundColor: '#ECFDF5',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: '#059669',
-                }}
-              >
-                <TrendingUp size={20} />
-              </div>
-              <div>
-                <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#0F172A', margin: 0 }}>
-                  Commercial & Financial Records
-                </h3>
-                <p style={{ fontSize: '12px', color: '#64748B', margin: '2px 0 0 0' }}>
-                  Proposals, Invoices & Double-Entry Ledger
-                </p>
-              </div>
+        {recentLeads.length === 0 ? (
+          <div style={{ padding: '48px 24px', textAlign: 'center', color: 'var(--cb-text-secondary)' }}>
+            <Building2 size={36} color="var(--cb-text-muted)" style={{ margin: '0 auto 12px auto' }} />
+            <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--cb-text-primary)' }}>
+              No Territory Leads Yet
             </div>
-            <p style={{ fontSize: '13px', color: '#475569', lineHeight: 1.5, margin: '0 0 16px 0' }}>
-              Inspect client proposals, milestone billing invoices, verified ledger entries, and configure payout destinations.
+            <p style={{ fontSize: '13px', margin: '4px 0 16px 0', color: 'var(--cb-text-secondary)', maxWidth: '420px', marginLeft: 'auto', marginRight: 'auto' }}>
+              Start earning 20% commission by capturing qualified business requirements or sharing your unique referral link.
             </p>
-            <div
+            <button
+              onClick={() => setLeadModalOpen(true)}
               style={{
+                backgroundColor: '#2563EB',
+                color: '#FFFFFF',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '8px 18px',
                 fontSize: '13px',
-                fontWeight: 700,
-                color: '#059669',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
+                fontWeight: 600,
+                cursor: 'pointer',
               }}
             >
-              Open Financial Records <ArrowRight size={14} />
-            </div>
+              + Register First Lead
+            </button>
           </div>
-        </Link>
+        ) : (
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
+              <thead>
+                <tr
+                  style={{
+                    backgroundColor: 'var(--cb-bg-surface)',
+                    borderBottom: '1px solid var(--cb-border-subtle)',
+                    color: 'var(--cb-text-secondary)',
+                    fontWeight: 600,
+                  }}
+                >
+                  <th style={{ padding: '12px 20px' }}>Business / Contact</th>
+                  <th style={{ padding: '12px 16px' }}>Service Type</th>
+                  <th style={{ padding: '12px 16px' }}>Budget</th>
+                  <th style={{ padding: '12px 16px' }}>Stage</th>
+                  <th style={{ padding: '12px 20px', textAlign: 'right' }}>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {recentLeads.map((lead, idx) => {
+                  const budgetFloat = (Number(lead.estimated_budget_minor) || 0) / 100;
+                  const isWon = lead.status === 'WON' || lead.status === 'CLIENT_APPROVED';
+                  const isLost = lead.status === 'LOST';
+
+                  return (
+                    <tr
+                      key={lead.id || idx}
+                      style={{
+                        borderBottom: '1px solid var(--cb-border-subtle)',
+                        transition: 'background-color 0.15s ease',
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--cb-bg-surface)')}
+                      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                    >
+                      <td style={{ padding: '14px 20px' }}>
+                        <div style={{ fontWeight: 700, color: 'var(--cb-text-primary)' }}>
+                          {lead.business_name || lead.company_name}
+                        </div>
+                        <div style={{ fontSize: '12px', color: 'var(--cb-text-secondary)', marginTop: '2px' }}>
+                          {lead.contact_person} &bull; {lead.email}
+                        </div>
+                      </td>
+
+                      <td style={{ padding: '14px 16px', color: 'var(--cb-text-secondary)' }}>
+                        {lead.business_type || 'Custom Solution'}
+                      </td>
+
+                      <td style={{ padding: '14px 16px', fontWeight: 600, color: 'var(--cb-text-primary)' }}>
+                        {lead.currency || currency} {budgetFloat > 0 ? budgetFloat.toLocaleString() : 'Negotiating'}
+                      </td>
+
+                      <td style={{ padding: '14px 16px' }}>
+                        <span
+                          style={{
+                            fontSize: '11px',
+                            fontWeight: 700,
+                            padding: '3px 8px',
+                            borderRadius: '12px',
+                            backgroundColor: isWon ? 'rgba(5, 150, 105, 0.12)' : isLost ? 'rgba(220, 38, 38, 0.12)' : 'rgba(37, 99, 235, 0.12)',
+                            color: isWon ? '#059669' : isLost ? '#DC2626' : '#2563EB',
+                          }}
+                        >
+                          {lead.status}
+                        </span>
+                      </td>
+
+                      <td style={{ padding: '14px 20px', textAlign: 'right' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '6px' }}>
+                          <button
+                            onClick={() => openChat(lead.id, 'LEAD')}
+                            title="Chat with client"
+                            style={{
+                              padding: '6px 10px',
+                              borderRadius: '6px',
+                              border: '1px solid var(--cb-border-subtle)',
+                              backgroundColor: 'var(--cb-bg-subtle)',
+                              color: 'var(--cb-text-primary)',
+                              cursor: 'pointer',
+                              fontSize: '12px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                            }}
+                          >
+                            <MessageSquare size={13} /> Chat
+                          </button>
+                          <Link
+                            href="/dashboard/representative/leads"
+                            style={{
+                              padding: '6px 10px',
+                              borderRadius: '6px',
+                              border: 'none',
+                              backgroundColor: '#2563EB',
+                              color: '#FFFFFF',
+                              fontSize: '11px',
+                              fontWeight: 600,
+                              textDecoration: 'none',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                            }}
+                          >
+                            Manage <ArrowRight size={11} />
+                          </Link>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );

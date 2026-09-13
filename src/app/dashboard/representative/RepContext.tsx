@@ -160,7 +160,7 @@ export function RepProvider({ children }: { children: React.ReactNode }) {
   }, [router]);
 
   const currency = currentUser?.country?.currency || 'KES';
-  const referralCode = currentUser?.country?.code === 'NG' ? 'NGA-001' : 'KEN-001';
+  const referralCode = currentUser?.representative?.referralCode || (currentUser?.country?.code === 'NG' ? 'NGA-001' : 'KEN-001');
   const isApproved = currentUser?.status === 'ACTIVE' || currentUser?.role === 'SUPER_ADMIN' || currentUser?.role === 'ADMIN';
 
   // Referral URL

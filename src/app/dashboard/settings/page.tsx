@@ -92,8 +92,8 @@ export default function SettingsPage() {
   const isRep = role === 'REPRESENTATIVE';
   const referralCode = user?.representative?.referralCode || '';
   const referralUrl = typeof window !== 'undefined' && referralCode
-    ? `${window.location.origin}/start/${referralCode}`
-    : `https://codebridge.app/start/${referralCode || 'rep'}`;
+    ? `${window.location.origin}/start?ref=${referralCode}`
+    : `https://code-bridge-rosy.vercel.app/start?ref=${referralCode || 'KEN-001'}`;
   const initials = `${(user.firstName || '').charAt(0)}${(user.lastName || '').charAt(0)}`.toUpperCase() || 'CB';
   const joinDate = user.createdAt
     ? new Date(user.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })

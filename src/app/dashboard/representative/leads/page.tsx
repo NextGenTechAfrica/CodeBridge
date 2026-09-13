@@ -148,7 +148,7 @@ export default function RepresentativeLeadsPage() {
           alignItems: 'center',
           justifyContent: 'center',
           padding: '60px',
-          color: '#64748B',
+          color: 'var(--cb-text-secondary)',
           fontSize: '14px',
           fontWeight: 600,
           gap: '10px',
@@ -174,26 +174,26 @@ export default function RepresentativeLeadsPage() {
         {/* Search & Overview Banner */}
         <div
           style={{
-            backgroundColor: '#FFFFFF',
+            backgroundColor: 'var(--cb-bg-card)',
             borderRadius: '16px',
             padding: '24px',
-            border: '1px solid #E2E8F0',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+            border: '1px solid var(--cb-border-subtle)',
+            boxShadow: 'var(--cb-shadow-sm, 0 1px 3px rgba(0,0,0,0.02))',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
           }}
         >
           <div>
-            <h2 style={{ fontSize: '16px', fontWeight: 800, color: '#0F172A', margin: 0 }}>
+            <h2 style={{ fontSize: '16px', fontWeight: 800, color: 'var(--cb-text-primary)', margin: 0 }}>
               Search & Filter Territory Leads
             </h2>
-            <p style={{ fontSize: '12px', color: '#64748B', margin: '4px 0 16px 0' }}>
+            <p style={{ fontSize: '12px', color: 'var(--cb-text-secondary)', margin: '4px 0 16px 0' }}>
               Filter by client name, email, contact person, or specific scoping keywords.
             </p>
 
             <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-              <Search size={16} style={{ position: 'absolute', left: '14px', color: '#94A3B8' }} />
+              <Search size={16} style={{ position: 'absolute', left: '14px', color: 'var(--cb-text-muted)' }} />
               <input
                 type="text"
                 placeholder="Search leads by name, email, notes..."
@@ -203,10 +203,10 @@ export default function RepresentativeLeadsPage() {
                   width: '100%',
                   padding: '11px 16px 11px 40px',
                   borderRadius: '12px',
-                  border: '1px solid #CBD5E1',
-                  backgroundColor: '#F8FAFC',
+                  border: '1px solid var(--cb-border-light)',
+                  backgroundColor: 'var(--cb-bg-input, var(--cb-bg-surface))',
                   fontSize: '13px',
-                  color: '#0F172A',
+                  color: 'var(--cb-text-primary)',
                   outline: 'none',
                 }}
               />
@@ -219,7 +219,7 @@ export default function RepresentativeLeadsPage() {
                     background: 'none',
                     border: 'none',
                     fontSize: '12px',
-                    color: '#94A3B8',
+                    color: 'var(--cb-text-muted)',
                     cursor: 'pointer',
                     fontWeight: 600,
                   }}
@@ -237,9 +237,9 @@ export default function RepresentativeLeadsPage() {
               justifyContent: 'space-between',
               marginTop: '18px',
               paddingTop: '16px',
-              borderTop: '1px solid #F1F5F9',
+              borderTop: '1px solid var(--cb-border-subtle)',
               fontSize: '12px',
-              color: '#64748B',
+              color: 'var(--cb-text-secondary)',
             }}
           >
             <span>
@@ -269,19 +269,19 @@ export default function RepresentativeLeadsPage() {
         {/* Lead Source Breakdown Donut Chart */}
         <div
           style={{
-            backgroundColor: '#FFFFFF',
+            backgroundColor: 'var(--cb-bg-card)',
             borderRadius: '16px',
             padding: '24px',
-            border: '1px solid #E2E8F0',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+            border: '1px solid var(--cb-border-subtle)',
+            boxShadow: 'var(--cb-shadow-sm, 0 1px 3px rgba(0,0,0,0.02))',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <h2 style={{ fontSize: '16px', fontWeight: 700, color: '#0F172A', margin: 0 }}>Leads by Source</h2>
-            <span style={{ fontSize: '12px', color: '#64748B', fontWeight: 500 }}>Attribution</span>
+            <h2 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--cb-text-primary)', margin: 0 }}>Leads by Source</h2>
+            <span style={{ fontSize: '12px', color: 'var(--cb-text-secondary)', fontWeight: 500 }}>Attribution</span>
           </div>
 
           {!sourceBreakdown.hasData ? (
@@ -292,13 +292,13 @@ export default function RepresentativeLeadsPage() {
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: '#94A3B8',
+                color: 'var(--cb-text-muted)',
                 textAlign: 'center',
               }}
             >
-              <PieChart size={36} color="#CBD5E1" style={{ marginBottom: '8px' }} />
-              <div style={{ fontSize: '13px', fontWeight: 600, color: '#64748B' }}>No source data recorded</div>
-              <div style={{ fontSize: '11px', color: '#94A3B8', marginTop: '2px' }}>
+              <PieChart size={36} color="var(--cb-text-muted)" style={{ marginBottom: '8px' }} />
+              <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--cb-text-secondary)' }}>No source data recorded</div>
+              <div style={{ fontSize: '11px', color: 'var(--cb-text-muted)', marginTop: '2px' }}>
                 Source attribution begins on lead capture
               </div>
             </div>
@@ -338,10 +338,10 @@ export default function RepresentativeLeadsPage() {
                     textAlign: 'center',
                   }}
                 >
-                  <span style={{ fontSize: '17px', fontWeight: 800, color: '#0F172A' }}>
+                  <span style={{ fontSize: '17px', fontWeight: 800, color: 'var(--cb-text-primary)' }}>
                     {sourceBreakdown.topSource?.percentage || 0}%
                   </span>
-                  <div style={{ fontSize: '10px', color: '#64748B', fontWeight: 600 }}>
+                  <div style={{ fontSize: '10px', color: 'var(--cb-text-secondary)', fontWeight: 600 }}>
                     {sourceBreakdown.topSource?.name || 'Direct'}
                   </div>
                 </div>
@@ -357,9 +357,9 @@ export default function RepresentativeLeadsPage() {
               gap: '10px',
               justifyContent: 'center',
               paddingTop: '12px',
-              borderTop: '1px solid #F1F5F9',
+              borderTop: '1px solid var(--cb-border-subtle)',
               fontSize: '11px',
-              color: '#64748B',
+              color: 'var(--cb-text-secondary)',
               fontWeight: 600,
             }}
           >
@@ -373,7 +373,7 @@ export default function RepresentativeLeadsPage() {
                 </div>
               ))
             ) : (
-              <span style={{ color: '#94A3B8' }}>Awaiting lead channel attribution</span>
+              <span style={{ color: 'var(--cb-text-muted)' }}>Awaiting lead channel attribution</span>
             )}
           </div>
         </div>
@@ -385,16 +385,16 @@ export default function RepresentativeLeadsPage() {
       <div
         id="rep-leads-section"
         style={{
-          backgroundColor: '#FFFFFF',
+          backgroundColor: 'var(--cb-bg-card)',
           borderRadius: '16px',
-          border: '1px solid #E2E8F0',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+          border: '1px solid var(--cb-border-subtle)',
+          boxShadow: 'var(--cb-shadow-sm, 0 1px 3px rgba(0,0,0,0.02))',
           marginBottom: '32px',
           overflow: 'hidden',
         }}
       >
         {/* Header & Stage Pills */}
-        <div style={{ padding: '20px 24px', borderBottom: '1px solid #F1F5F9' }}>
+        <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--cb-border-subtle)' }}>
           <div
             style={{
               display: 'flex',
@@ -406,10 +406,10 @@ export default function RepresentativeLeadsPage() {
             }}
           >
             <div>
-              <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#0F172A', margin: 0 }}>
+              <h3 style={{ fontSize: '16px', fontWeight: 800, color: 'var(--cb-text-primary)', margin: 0 }}>
                 Active Leads Roster ({filteredLeads.length})
               </h3>
-              <p style={{ fontSize: '12px', color: '#64748B', margin: '3px 0 0 0' }}>
+              <p style={{ fontSize: '12px', color: 'var(--cb-text-secondary)', margin: '3px 0 0 0' }}>
                 Manage client outreach, requirements gathering, and track automated status progression.
               </p>
             </div>
@@ -420,7 +420,7 @@ export default function RepresentativeLeadsPage() {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '6px',
-                backgroundColor: '#0F172A',
+                backgroundColor: '#2563EB',
                 color: '#FFFFFF',
                 border: 'none',
                 borderRadius: '8px',
@@ -451,9 +451,9 @@ export default function RepresentativeLeadsPage() {
                     borderRadius: '20px',
                     fontSize: '12px',
                     fontWeight: isSelected ? 700 : 500,
-                    backgroundColor: isSelected ? '#0F172A' : '#F1F5F9',
-                    color: isSelected ? '#FFFFFF' : '#64748B',
-                    border: 'none',
+                    backgroundColor: isSelected ? '#2563EB' : 'var(--cb-bg-subtle)',
+                    color: isSelected ? '#FFFFFF' : 'var(--cb-text-secondary)',
+                    border: '1px solid var(--cb-border-subtle)',
                     cursor: 'pointer',
                     whiteSpace: 'nowrap',
                     transition: 'all 0.15s ease',
@@ -462,8 +462,8 @@ export default function RepresentativeLeadsPage() {
                   <span>{s.label}</span>
                   <span
                     style={{
-                      backgroundColor: isSelected ? 'rgba(255,255,255,0.2)' : '#E2E8F0',
-                      color: isSelected ? '#FFFFFF' : '#0F172A',
+                      backgroundColor: isSelected ? 'rgba(255,255,255,0.25)' : 'var(--cb-border-subtle)',
+                      color: isSelected ? '#FFFFFF' : 'var(--cb-text-primary)',
                       fontSize: '10px',
                       padding: '1px 6px',
                       borderRadius: '10px',
@@ -480,10 +480,10 @@ export default function RepresentativeLeadsPage() {
 
         {/* Leads Table with Clean Empty State */}
         {filteredLeads.length === 0 ? (
-          <div style={{ padding: '48px', textAlign: 'center', color: '#64748B' }}>
-            <Building2 size={36} color="#CBD5E1" style={{ margin: '0 auto 12px auto' }} />
-            <div style={{ fontSize: '15px', fontWeight: 700, color: '#0F172A' }}>No leads found</div>
-            <p style={{ fontSize: '13px', margin: '4px 0 16px 0' }}>
+          <div style={{ padding: '48px', textAlign: 'center', color: 'var(--cb-text-secondary)' }}>
+            <Building2 size={36} color="var(--cb-text-muted)" style={{ margin: '0 auto 12px auto' }} />
+            <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--cb-text-primary)' }}>No leads found</div>
+            <p style={{ fontSize: '13px', margin: '4px 0 16px 0', color: 'var(--cb-text-secondary)' }}>
               {searchQuery ? 'No leads matched your search query.' : 'There are no active leads in this pipeline stage.'}
             </p>
             <button
@@ -508,9 +508,9 @@ export default function RepresentativeLeadsPage() {
               <thead>
                 <tr
                   style={{
-                    backgroundColor: '#F8FAFC',
-                    borderBottom: '1px solid #E2E8F0',
-                    color: '#64748B',
+                    backgroundColor: 'var(--cb-bg-surface)',
+                    borderBottom: '1px solid var(--cb-border-subtle)',
+                    color: 'var(--cb-text-secondary)',
                     fontWeight: 600,
                   }}
                 >
@@ -532,29 +532,29 @@ export default function RepresentativeLeadsPage() {
                     <tr
                       key={lead.id || idx}
                       style={{
-                        borderBottom: '1px solid #F1F5F9',
+                        borderBottom: '1px solid var(--cb-border-subtle)',
                         transition: 'background-color 0.15s ease',
                       }}
-                      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#F8FAFC')}
+                      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--cb-bg-surface)')}
                       onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
                     >
                       {/* Business & Contact */}
                       <td style={{ padding: '14px 20px' }}>
-                        <div style={{ fontWeight: 700, color: '#0F172A' }}>
+                        <div style={{ fontWeight: 700, color: 'var(--cb-text-primary)' }}>
                           {lead.business_name || lead.company_name}
                         </div>
-                        <div style={{ fontSize: '12px', color: '#64748B', marginTop: '2px' }}>
+                        <div style={{ fontSize: '12px', color: 'var(--cb-text-secondary)', marginTop: '2px' }}>
                           {lead.contact_person} • {lead.email}
                         </div>
                       </td>
 
                       {/* Service Type */}
-                      <td style={{ padding: '14px 16px', color: '#475569' }}>
+                      <td style={{ padding: '14px 16px', color: 'var(--cb-text-secondary)' }}>
                         {lead.business_type || 'Custom Software'}
                       </td>
 
                       {/* Budget */}
-                      <td style={{ padding: '14px 16px', fontWeight: 600, color: '#0F172A' }}>
+                      <td style={{ padding: '14px 16px', fontWeight: 600, color: 'var(--cb-text-primary)' }}>
                         {lead.currency || currency} {budgetFloat > 0 ? budgetFloat.toLocaleString() : 'Negotiating'}
                       </td>
 
@@ -566,8 +566,9 @@ export default function RepresentativeLeadsPage() {
                             fontWeight: 600,
                             padding: '2px 8px',
                             borderRadius: '6px',
-                            backgroundColor: '#F1F5F9',
-                            color: '#475569',
+                            backgroundColor: 'var(--cb-bg-subtle)',
+                            color: 'var(--cb-text-secondary)',
+                            border: '1px solid var(--cb-border-subtle)',
                           }}
                         >
                           {lead.referral_source || 'Direct'}
@@ -582,7 +583,7 @@ export default function RepresentativeLeadsPage() {
                             fontWeight: 700,
                             padding: '3px 8px',
                             borderRadius: '12px',
-                            backgroundColor: isWon ? '#ECFDF5' : isLost ? '#FEF2F2' : '#EFF6FF',
+                            backgroundColor: isWon ? 'rgba(5, 150, 105, 0.12)' : isLost ? 'rgba(220, 38, 38, 0.12)' : 'rgba(37, 99, 235, 0.12)',
                             color: isWon ? '#059669' : isLost ? '#DC2626' : '#2563EB',
                           }}
                         >
@@ -599,9 +600,9 @@ export default function RepresentativeLeadsPage() {
                             style={{
                               padding: '6px 10px',
                               borderRadius: '6px',
-                              border: '1px solid #CBD5E1',
-                              backgroundColor: '#FFFFFF',
-                              color: '#475569',
+                              border: '1px solid var(--cb-border-subtle)',
+                              backgroundColor: 'var(--cb-bg-subtle)',
+                              color: 'var(--cb-text-primary)',
                               cursor: 'pointer',
                               fontSize: '12px',
                               display: 'flex',

@@ -125,7 +125,7 @@ export default function RepresentativePipelinePage() {
           alignItems: 'center',
           justifyContent: 'center',
           padding: '60px',
-          color: '#64748B',
+          color: 'var(--cb-text-secondary)',
           fontSize: '14px',
           fontWeight: 600,
           gap: '10px',
@@ -154,11 +154,11 @@ export default function RepresentativePipelinePage() {
         <div
           id="pipeline-perf-card"
           style={{
-            backgroundColor: '#FFFFFF',
+            backgroundColor: 'var(--cb-bg-card)',
             borderRadius: '16px',
             padding: '24px',
-            border: '1px solid #E2E8F0',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+            border: '1px solid var(--cb-border-subtle)',
+            boxShadow: 'var(--cb-shadow-sm, 0 1px 3px rgba(0,0,0,0.02))',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
@@ -166,10 +166,10 @@ export default function RepresentativePipelinePage() {
         >
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px' }}>
             <div>
-              <h2 style={{ fontSize: '16px', fontWeight: 700, color: '#0F172A', margin: 0 }}>
+              <h2 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--cb-text-primary)', margin: 0 }}>
                 Pipeline Performance
               </h2>
-              <span style={{ fontSize: '12px', color: '#64748B', fontWeight: 500 }}>
+              <span style={{ fontSize: '12px', color: 'var(--cb-text-secondary)', fontWeight: 500 }}>
                 Lead conversion funnel ({totalLeadsCount} total leads)
               </span>
             </div>
@@ -181,7 +181,8 @@ export default function RepresentativePipelinePage() {
                 fontSize: '12px',
                 fontWeight: 700,
                 color: '#2563EB',
-                backgroundColor: '#EFF6FF',
+                backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                border: '1px solid rgba(37, 99, 235, 0.25)',
                 padding: '4px 10px',
                 borderRadius: '8px',
               }}
@@ -198,14 +199,14 @@ export default function RepresentativePipelinePage() {
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: '#94A3B8',
+                color: 'var(--cb-text-muted)',
                 textAlign: 'center',
                 padding: '20px',
               }}
             >
-              <BarChart3 size={36} color="#CBD5E1" style={{ marginBottom: '10px' }} />
-              <div style={{ fontSize: '14px', fontWeight: 700, color: '#0F172A' }}>No pipeline records yet</div>
-              <div style={{ fontSize: '12px', color: '#64748B', marginTop: '4px', maxWidth: '320px' }}>
+              <BarChart3 size={36} color="var(--cb-text-muted)" style={{ marginBottom: '10px' }} />
+              <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--cb-text-primary)' }}>No pipeline records yet</div>
+              <div style={{ fontSize: '12px', color: 'var(--cb-text-secondary)', marginTop: '4px', maxWidth: '320px' }}>
                 Register new client leads or share your referral link to build your sales funnel.
               </div>
             </div>
@@ -253,17 +254,17 @@ export default function RepresentativePipelinePage() {
                           zIndex: 10,
                         }}
                       >
-                        <div style={{ fontSize: '13px', fontWeight: 800, color: '#0F172A', lineHeight: 1 }}>
+                        <div style={{ fontSize: '13px', fontWeight: 800, color: 'var(--cb-text-primary)', lineHeight: 1 }}>
                           {stage.count}
                         </div>
-                        <div style={{ fontSize: '10px', fontWeight: 600, color: '#64748B', marginTop: '2px' }}>
+                        <div style={{ fontSize: '10px', fontWeight: 600, color: 'var(--cb-text-secondary)', marginTop: '2px' }}>
                           {stage.label}
                         </div>
                       </div>
                     )}
 
                     {!isHighlight && (
-                      <div style={{ fontSize: '12px', fontWeight: 700, color: '#64748B', marginBottom: '6px' }}>
+                      <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--cb-text-secondary)', marginBottom: '6px' }}>
                         {stage.count}
                       </div>
                     )}
@@ -277,16 +278,16 @@ export default function RepresentativePipelinePage() {
                         background:
                           isHighlight && stage.count > 0
                             ? 'linear-gradient(180deg, #3B82F6 0%, #BFDBFE 100%)'
-                            : '#E2E8F0',
+                            : 'var(--cb-bg-subtle)',
                         transition: 'height 0.3s ease, background 0.2s ease',
                         boxShadow:
                           isHighlight && stage.count > 0 ? '0 4px 14px rgba(59, 130, 246, 0.25)' : 'none',
                       }}
                       onMouseEnter={(e) => {
-                        if (!isHighlight) e.currentTarget.style.backgroundColor = '#CBD5E1';
+                        if (!isHighlight) e.currentTarget.style.backgroundColor = 'var(--cb-border-subtle)';
                       }}
                       onMouseLeave={(e) => {
-                        if (!isHighlight) e.currentTarget.style.backgroundColor = '#E2E8F0';
+                        if (!isHighlight) e.currentTarget.style.backgroundColor = 'var(--cb-bg-subtle)';
                       }}
                     />
 
@@ -295,7 +296,7 @@ export default function RepresentativePipelinePage() {
                         marginTop: '12px',
                         fontSize: '12px',
                         fontWeight: isHighlight && stage.count > 0 ? 700 : 500,
-                        color: isHighlight && stage.count > 0 ? '#2563EB' : '#64748B',
+                        color: isHighlight && stage.count > 0 ? '#2563EB' : 'var(--cb-text-secondary)',
                       }}
                     >
                       {stage.label}
@@ -311,11 +312,11 @@ export default function RepresentativePipelinePage() {
         <div
           id="velocity-perf-card"
           style={{
-            backgroundColor: '#FFFFFF',
+            backgroundColor: 'var(--cb-bg-card)',
             borderRadius: '16px',
             padding: '24px',
-            border: '1px solid #E2E8F0',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+            border: '1px solid var(--cb-border-subtle)',
+            boxShadow: 'var(--cb-shadow-sm, 0 1px 3px rgba(0,0,0,0.02))',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
@@ -323,10 +324,10 @@ export default function RepresentativePipelinePage() {
         >
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px' }}>
             <div>
-              <h2 style={{ fontSize: '16px', fontWeight: 700, color: '#0F172A', margin: 0 }}>
+              <h2 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--cb-text-primary)', margin: 0 }}>
                 Lead & Deal Velocity
               </h2>
-              <span style={{ fontSize: '12px', color: '#64748B', fontWeight: 500 }}>
+              <span style={{ fontSize: '12px', color: 'var(--cb-text-secondary)', fontWeight: 500 }}>
                 Cadence of interactions & pipeline progression
               </span>
             </div>
@@ -337,9 +338,9 @@ export default function RepresentativePipelinePage() {
                 gap: '4px',
                 fontSize: '12px',
                 fontWeight: 600,
-                color: '#64748B',
-                backgroundColor: '#F8FAFC',
-                border: '1px solid #E2E8F0',
+                color: 'var(--cb-text-secondary)',
+                backgroundColor: 'var(--cb-bg-subtle)',
+                border: '1px solid var(--cb-border-subtle)',
                 padding: '4px 10px',
                 borderRadius: '8px',
               }}
@@ -356,14 +357,14 @@ export default function RepresentativePipelinePage() {
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: '#94A3B8',
+                color: 'var(--cb-text-muted)',
                 textAlign: 'center',
                 padding: '20px',
               }}
             >
-              <Clock size={36} color="#CBD5E1" style={{ marginBottom: '10px' }} />
-              <div style={{ fontSize: '14px', fontWeight: 700, color: '#0F172A' }}>No activity records yet</div>
-              <div style={{ fontSize: '12px', color: '#64748B', marginTop: '4px' }}>
+              <Clock size={36} color="var(--cb-text-muted)" style={{ marginBottom: '10px' }} />
+              <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--cb-text-primary)' }}>No activity records yet</div>
+              <div style={{ fontSize: '12px', color: 'var(--cb-text-secondary)', marginTop: '4px' }}>
                 Deal advancement cadence will display as leads transition through pipeline stages.
               </div>
             </div>
@@ -410,7 +411,7 @@ export default function RepresentativePipelinePage() {
                           width: '100%',
                           maxWidth: '18px',
                           height: `${item.val}%`,
-                          backgroundColor: isPeak ? '#3B82F6' : '#DBEAFE',
+                          backgroundColor: isPeak ? '#3B82F6' : 'var(--cb-bg-subtle)',
                           borderRadius: '3px 3px 0 0',
                           transition: 'height 0.2s ease',
                         }}
@@ -425,7 +426,7 @@ export default function RepresentativePipelinePage() {
                   justifyContent: 'space-between',
                   marginTop: '12px',
                   fontSize: '11px',
-                  color: '#94A3B8',
+                  color: 'var(--cb-text-muted)',
                   fontWeight: 500,
                 }}
               >
@@ -452,29 +453,29 @@ export default function RepresentativePipelinePage() {
         {/* Card 1: Closed Deal Revenue */}
         <div
           style={{
-            backgroundColor: '#FFFFFF',
+            backgroundColor: 'var(--cb-bg-card)',
             borderRadius: '16px',
             padding: '24px',
-            border: '1px solid #E2E8F0',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+            border: '1px solid var(--cb-border-subtle)',
+            boxShadow: 'var(--cb-shadow-sm, 0 1px 3px rgba(0,0,0,0.02))',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
           }}
         >
           <div>
-            <div style={{ fontSize: '13px', color: '#64748B', fontWeight: 600 }}>
+            <div style={{ fontSize: '13px', color: 'var(--cb-text-secondary)', fontWeight: 600 }}>
               Closed Deal Revenue ({currency})
             </div>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginTop: '6px' }}>
-              <span style={{ fontSize: '26px', fontWeight: 800, color: '#0F172A', letterSpacing: '-0.02em' }}>
+              <span style={{ fontSize: '26px', fontWeight: 800, color: 'var(--cb-text-primary)', letterSpacing: '-0.02em' }}>
                 {currency} {totalWonRevenueFormatted}
               </span>
             </div>
             <div
               style={{
                 fontSize: '12px',
-                color: totalWonRevenueMinor > 0 ? '#059669' : '#94A3B8',
+                color: totalWonRevenueMinor > 0 ? '#059669' : 'var(--cb-text-muted)',
                 marginTop: '4px',
                 fontWeight: 600,
               }}
@@ -491,11 +492,11 @@ export default function RepresentativePipelinePage() {
               <defs>
                 <linearGradient id="revenueGrad" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="#3B82F6" stopOpacity={totalWonRevenueMinor > 0 ? 0.35 : 0.05} />
-                  <stop offset="100%" stopColor="#3B82F6" stopOpacity="0.0" />
+                  <stop offset="100%" stopColor="#3B82F6" stopOpacity={0.0} />
                 </linearGradient>
               </defs>
-              <line x1="0" y1="30" x2="300" y2="30" stroke="#F1F5F9" strokeWidth="1" />
-              <line x1="0" y1="65" x2="300" y2="65" stroke="#F1F5F9" strokeWidth="1" />
+              <line x1="0" y1="30" x2="300" y2="30" stroke="var(--cb-border-subtle)" strokeWidth="1" />
+              <line x1="0" y1="65" x2="300" y2="65" stroke="var(--cb-border-subtle)" strokeWidth="1" />
 
               {totalWonRevenueMinor > 0 ? (
                 <>
@@ -511,12 +512,12 @@ export default function RepresentativePipelinePage() {
                   />
                 </>
               ) : (
-                <path d="M 0 85 L 300 85" fill="none" stroke="#CBD5E1" strokeWidth="1.5" strokeDasharray="4 4" />
+                <path d="M 0 85 L 300 85" fill="none" stroke="var(--cb-border-subtle)" strokeWidth="1.5" strokeDasharray="4 4" />
               )}
             </svg>
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#94A3B8' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--cb-text-muted)' }}>
             <span>Initial Pipeline</span>
             <span>Conversion Growth</span>
             <span>Settled</span>
@@ -526,19 +527,19 @@ export default function RepresentativePipelinePage() {
         {/* Card 2: Revenue by Region */}
         <div
           style={{
-            backgroundColor: '#FFFFFF',
+            backgroundColor: 'var(--cb-bg-card)',
             borderRadius: '16px',
             padding: '24px',
-            border: '1px solid #E2E8F0',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+            border: '1px solid var(--cb-border-subtle)',
+            boxShadow: 'var(--cb-shadow-sm, 0 1px 3px rgba(0,0,0,0.02))',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <h2 style={{ fontSize: '16px', fontWeight: 700, color: '#0F172A', margin: 0 }}>Revenue by Region</h2>
-            <Globe size={16} color="#64748B" />
+            <h2 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--cb-text-primary)', margin: 0 }}>Revenue by Region</h2>
+            <Globe size={16} color="var(--cb-text-secondary)" />
           </div>
 
           {!regionalBreakdown.hasData ? (
@@ -549,16 +550,16 @@ export default function RepresentativePipelinePage() {
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: '#94A3B8',
+                color: 'var(--cb-text-muted)',
                 textAlign: 'center',
                 padding: '16px',
               }}
             >
-              <Globe size={36} color="#CBD5E1" style={{ marginBottom: '8px' }} />
-              <div style={{ fontSize: '13px', fontWeight: 600, color: '#64748B' }}>
+              <Globe size={36} color="var(--cb-text-muted)" style={{ marginBottom: '8px' }} />
+              <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--cb-text-secondary)' }}>
                 No regional distribution yet
               </div>
-              <div style={{ fontSize: '11px', color: '#94A3B8', marginTop: '4px' }}>
+              <div style={{ fontSize: '11px', color: 'var(--cb-text-muted)', marginTop: '4px' }}>
                 Confirmed client settlements in {regionalBreakdown.territoryName} will populate territory split.
               </div>
             </div>
@@ -586,9 +587,9 @@ export default function RepresentativePipelinePage() {
               gap: '10px',
               justifyContent: 'center',
               paddingTop: '12px',
-              borderTop: '1px solid #F1F5F9',
+              borderTop: '1px solid var(--cb-border-subtle)',
               fontSize: '11px',
-              color: '#64748B',
+              color: 'var(--cb-text-secondary)',
               fontWeight: 700,
             }}
           >
@@ -602,7 +603,7 @@ export default function RepresentativePipelinePage() {
                 </div>
               ))
             ) : (
-              <span style={{ color: '#94A3B8', fontWeight: 500 }}>
+              <span style={{ color: 'var(--cb-text-muted)', fontWeight: 500 }}>
                 Primary Territory: {regionalBreakdown.territoryName}
               </span>
             )}

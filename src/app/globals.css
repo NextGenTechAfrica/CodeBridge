@@ -773,8 +773,24 @@ html:not(.dark) .cb-logo-dark-theme {
 }
 
 .dark .cb-rep-workspace [style*="background-color: #F1F5F9"],
-.dark .cb-rep-workspace [style*="backgroundColor: #F1F5F9"] {
+.dark .cb-rep-workspace [style*="background-color: rgb(241, 245, 249)"],
+.dark .cb-rep-workspace [style*="backgroundColor: #F1F5F9"],
+.dark .cb-rep-workspace [style*="backgroundColor: rgb(241, 245, 249)"] {
   background-color: #16264A !important;
+}
+
+.dark .cb-rep-workspace [style*="background-color: #E2E8F0"],
+.dark .cb-rep-workspace [style*="background-color: rgb(226, 232, 240)"],
+.dark .cb-rep-workspace [style*="backgroundColor: #E2E8F0"],
+.dark .cb-rep-workspace [style*="backgroundColor: rgb(226, 232, 240)"] {
+  background-color: #1E3A6E !important;
+}
+
+.dark .cb-rep-workspace [style*="background-color: #EFF6FF"],
+.dark .cb-rep-workspace [style*="background-color: rgb(239, 246, 255)"],
+.dark .cb-rep-workspace [style*="backgroundColor: #EFF6FF"],
+.dark .cb-rep-workspace [style*="backgroundColor: rgb(239, 246, 255)"] {
+  background-color: rgba(37, 99, 235, 0.15) !important;
 }
 
 .dark .cb-rep-workspace [style*="color: #0F172A"],
@@ -790,7 +806,9 @@ html:not(.dark) .cb-logo-dark-theme {
 }
 
 .dark .cb-rep-workspace [style*="border: 1px solid #E2E8F0"],
+.dark .cb-rep-workspace [style*="border: 1px solid rgb(226, 232, 240)"],
 .dark .cb-rep-workspace [style*="border-color: #E2E8F0"],
+.dark .cb-rep-workspace [style*="border-color: rgb(226, 232, 240)"],
 .dark .cb-rep-workspace [style*="border: '1px solid #E2E8F0'"] {
   border-color: rgba(255, 255, 255, 0.08) !important;
 }

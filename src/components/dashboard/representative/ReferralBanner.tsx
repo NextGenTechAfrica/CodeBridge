@@ -70,7 +70,7 @@ export default function ReferralBanner() {
             display: 'flex',
             alignItems: 'center',
             gap: '6px',
-            backgroundColor: copiedReferral ? '#059669' : '#0F172A',
+            backgroundColor: copiedReferral ? '#059669' : '#2563EB',
             color: '#FFFFFF',
             border: 'none',
             borderRadius: '8px',
