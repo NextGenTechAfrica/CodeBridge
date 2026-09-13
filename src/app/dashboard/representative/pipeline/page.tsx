@@ -170,7 +170,7 @@ export default function RepresentativePipelinePage() {
                 Pipeline Performance
               </h2>
               <span style={{ fontSize: '12px', color: 'var(--cb-text-secondary)', fontWeight: 500 }}>
-                Lead conversion funnel ({totalLeadsCount} total leads)
+                Client deal progression funnel ({totalLeadsCount} total clients)
               </span>
             </div>
             <div
@@ -207,7 +207,7 @@ export default function RepresentativePipelinePage() {
               <BarChart3 size={36} color="var(--cb-text-muted)" style={{ marginBottom: '10px' }} />
               <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--cb-text-primary)' }}>No pipeline records yet</div>
               <div style={{ fontSize: '12px', color: 'var(--cb-text-secondary)', marginTop: '4px', maxWidth: '320px' }}>
-                Register new client leads or share your referral link to build your sales funnel.
+                Add new clients or share your onboarding link to build your deal pipeline.
               </div>
             </div>
           ) : (
@@ -325,7 +325,7 @@ export default function RepresentativePipelinePage() {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px' }}>
             <div>
               <h2 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--cb-text-primary)', margin: 0 }}>
-                Lead & Deal Velocity
+                Deal & Client Velocity
               </h2>
               <span style={{ fontSize: '12px', color: 'var(--cb-text-secondary)', fontWeight: 500 }}>
                 Cadence of interactions & pipeline progression
@@ -365,7 +365,7 @@ export default function RepresentativePipelinePage() {
               <Clock size={36} color="var(--cb-text-muted)" style={{ marginBottom: '10px' }} />
               <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--cb-text-primary)' }}>No activity records yet</div>
               <div style={{ fontSize: '12px', color: 'var(--cb-text-secondary)', marginTop: '4px' }}>
-                Deal advancement cadence will display as leads transition through pipeline stages.
+                Deal advancement cadence will display as clients transition through pipeline stages.
               </div>
             </div>
           ) : (
