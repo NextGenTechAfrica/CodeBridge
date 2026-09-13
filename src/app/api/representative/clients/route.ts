@@ -65,7 +65,10 @@ export async function POST(req: NextRequest) {
     }
 
     const repId = rep ? rep.id : null;
-    const refCode = rep?.referral_code || 'KEN-001';
+    const isNigeria = rep?.country_id === 'c_ng' || rep?.referral_code?.startsWith('NGA');
+    const fallbackCountryId = isNigeria ? 'c_ng' : 'c_ke';
+    const fallbackCurrency = isNigeria ? 'NGN' : 'KES';
+    const refCode = rep?.referral_code || (isNigeria ? 'NGA-001' : 'KEN-001');
 
     const body = await req.json();
     const { companyName, contactPerson, email, phone, requirements, notes } = body;
@@ -121,9 +124,9 @@ export async function POST(req: NextRequest) {
         contactPerson || 'Valued Client',
         cleanEmail,
         phone || '',
-        rep?.country_id || 'c_ke',
+        rep?.country_id || fallbackCountryId,
         requirements || 'Initial prospect registered offline by Sales Representative',
-        rep?.currency || 'KES',
+        rep?.currency || fallbackCurrency,
         repId,
         notes || 'Created via Rep offline onboarding workflow',
       ]);

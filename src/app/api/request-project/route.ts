@@ -67,18 +67,19 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const targetCode = (countryCode || 'KE').toUpperCase();
+    // Process Referral Attribution first to deduce territory if not explicitly specified
+    const cbRef = (body.referralCode || req.cookies.get('cb_ref')?.value || '').trim();
+    const isNgRef = cbRef?.toUpperCase().startsWith('NG') || currency === 'NGN';
+    const targetCode = (countryCode || (isNgRef ? 'NG' : 'KE')).toUpperCase();
     const countryInfo = await queryOne('SELECT id, currency FROM countries WHERE code = ?', [targetCode]);
-    const countryId = countryInfo ? countryInfo.id : 'c_ke';
-    const chosenCurrency: CurrencyCode = (currency || countryInfo?.currency || 'KES') as CurrencyCode;
+    const countryId = countryInfo ? countryInfo.id : (targetCode === 'NG' ? 'c_ng' : 'c_ke');
+    const chosenCurrency: CurrencyCode = (currency || countryInfo?.currency || (targetCode === 'NG' ? 'NGN' : 'KES')) as CurrencyCode;
 
     const budgetNumber = Number(estimatedBudget) || 0;
     const estimatedBudgetMinor = Math.round(budgetNumber * 100);
 
     const leadId = `lead_pub_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
 
-    // Process Referral Attribution
-    const cbRef = (body.referralCode || req.cookies.get('cb_ref')?.value || '').trim();
     let representativeId = null;
     let referralSource: ReferralSource = 'DIRECT';
     let systemNotes = `Submitted through CodeBridge Public Web Scoping Form (Service: ${serviceCategory || 'General'})`;

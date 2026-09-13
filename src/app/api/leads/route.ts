@@ -94,20 +94,16 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Resolve country
-    const targetCode = (countryCode || 'KE').toUpperCase();
-    const country = await queryOne('SELECT id, currency FROM countries WHERE code = ?', [targetCode]);
-    const countryId = country ? country.id : 'c_ke';
-    const chosenCurrency: CurrencyCode = (currency || country?.currency || 'KES') as CurrencyCode;
-
-    // Monetary representation: convert to minor integer units (1 KES = 100 minor units)
-    const budgetNumber = Number(estimatedBudget) || 0;
-    const estimatedBudgetMinor = Math.round(budgetNumber * 100);
-
-    // Resolve representative ID
+    // Resolve representative ID & territory
     let repId: string | null = null;
+    let repCountryCode: string | null = null;
     if (session.role === 'REPRESENTATIVE') {
-      const rep = await queryOne('SELECT id, approval_status FROM representatives WHERE user_id = ?', [session.userId]);
+      const rep = await queryOne<any>(`
+        SELECT r.id, r.approval_status, c.code as country_code
+        FROM representatives r
+        LEFT JOIN countries c ON r.country_id = c.id
+        WHERE r.user_id = ?
+      `, [session.userId]);
       if (rep?.approval_status !== 'ACTIVE') {
         return NextResponse.json(
           { error: 'Your representative account is pending approval. You cannot submit active leads until approved.' },
@@ -115,9 +111,27 @@ export async function POST(req: NextRequest) {
         );
       }
       repId = rep.id;
+      repCountryCode = rep.country_code;
     } else if (body.representativeId) {
       repId = body.representativeId;
+      const rep = await queryOne<any>(`
+        SELECT c.code as country_code
+        FROM representatives r
+        LEFT JOIN countries c ON r.country_id = c.id
+        WHERE r.id = ?
+      `, [repId]);
+      repCountryCode = rep?.country_code;
     }
+
+    // Resolve country
+    const targetCode = (countryCode || repCountryCode || (currency === 'NGN' ? 'NG' : 'KE')).toUpperCase();
+    const country = await queryOne<any>('SELECT id, currency FROM countries WHERE code = ?', [targetCode]);
+    const countryId = country ? country.id : (targetCode === 'NG' ? 'c_ng' : 'c_ke');
+    const chosenCurrency: CurrencyCode = (currency || country?.currency || (targetCode === 'NG' ? 'NGN' : 'KES')) as CurrencyCode;
+
+    // Monetary representation: convert to minor integer units (1 KES/NGN = 100 minor units)
+    const budgetNumber = Number(estimatedBudget) || 0;
+    const estimatedBudgetMinor = Math.round(budgetNumber * 100);
 
     const leadId = `lead_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
     const status: LeadStatus = 'NEW';

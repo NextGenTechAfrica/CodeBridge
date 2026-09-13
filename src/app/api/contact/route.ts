@@ -27,6 +27,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Please provide a message or description of your inquiry.' }, { status: 400 });
     }
 
+    // Resolve Referral Attribution from cookie
+    const cbRef = req.cookies.get('cb_ref')?.value;
+
     // Resolve Country
     let country = null;
     if (countryParam) {
@@ -36,17 +39,17 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Default to Kenya or Nigeria if not matched
+    // Default based on referral code or default territory
     if (!country) {
-      country = await queryOne("SELECT id, currency FROM countries WHERE code = 'KE'") 
-             || await queryOne("SELECT id, currency FROM countries WHERE code = 'NG'");
+      const isNg = cbRef?.toUpperCase().startsWith('NG');
+      country = isNg
+        ? await queryOne("SELECT id, currency FROM countries WHERE code = 'NG'")
+        : await queryOne("SELECT id, currency FROM countries WHERE code = 'KE'");
     }
 
-    const countryId = country?.id || 'c_ke';
-    const currency: CurrencyCode = (country?.currency || 'KES') as CurrencyCode;
+    const countryId = country?.id || (cbRef?.toUpperCase().startsWith('NG') ? 'c_ng' : 'c_ke');
+    const currency: CurrencyCode = (country?.currency || (cbRef?.toUpperCase().startsWith('NG') ? 'NGN' : 'KES')) as CurrencyCode;
 
-    // Resolve Referral Attribution from cookie
-    const cbRef = req.cookies.get('cb_ref')?.value;
     let representativeId: string | null = null;
     let referralSource: ReferralSource = 'DIRECT';
     let systemNotes = `Direct Website Contact Inquiry [Category: ${category}]`;

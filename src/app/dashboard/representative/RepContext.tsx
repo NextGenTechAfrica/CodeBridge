@@ -282,7 +282,7 @@ export function RepProvider({ children }: { children: React.ReactNode }) {
           businessType: 'Business Websites',
           requirements: '',
           estimatedBudget: '',
-          currency: currentUser?.country?.currency || 'KES',
+          currency: currentUser?.country?.currency || (isNigeriaUser ? 'NGN' : 'KES'),
           notes: '',
         });
         leadListeners.forEach((fn) => fn());

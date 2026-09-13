@@ -183,7 +183,7 @@ export async function POST(req: NextRequest) {
       }
 
       representativeId = lead.representative_id || null;
-      targetCurrency = (lead.currency || 'KES') as CurrencyCode;
+      targetCurrency = (lead.currency || (lead.country_id === 'c_ng' ? 'NGN' : 'KES')) as CurrencyCode;
 
       // Check if a client record already exists for this lead or email
       let existingClient = await queryOne('SELECT id, user_id FROM clients WHERE lead_id = ?', [leadId]);

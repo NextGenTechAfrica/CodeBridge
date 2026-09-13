@@ -419,7 +419,7 @@ export default function AdminOpsDashboard() {
         deliverables: 'Custom UI/UX System Architecture\nScalable API & Database Engineering\nInternal Quality Assurance & UAT\nProduction Deployment & Handover',
         paymentStructureType: 'FULL_UPFRONT',
         totalAmount: estBudget,
-        currency: lead.currency || 'KES',
+        currency: lead.currency || (lead.country_id === 'c_ng' || lead.country_code === 'NG' ? 'NGN' : 'KES'),
         validDays: 14,
         termsNotes: 'Standard engineering schedule with 100% CodeBridge warranty.',
         status: 'SENT',

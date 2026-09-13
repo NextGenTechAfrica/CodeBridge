@@ -7,25 +7,17 @@ import {
   Users,
   RefreshCw,
 } from 'lucide-react';
+import { useRep } from '../RepContext';
 
 export default function RepClientsPage() {
-  const [currentUser, setCurrentUser] = useState<any>(null);
+  const { currentUser, currency } = useRep();
   const [projects, setProjects] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [resMe, resProjects] = await Promise.all([
-          fetch('/api/auth/me'),
-          fetch('/api/projects'),
-        ]);
-
-        if (resMe.ok) {
-          const d = await resMe.json();
-          setCurrentUser(d.user);
-        }
-
+        const resProjects = await fetch('/api/projects');
         if (resProjects.ok) {
           const d = await resProjects.json();
           setProjects(d.projects || []);
@@ -58,8 +50,6 @@ export default function RepClientsPage() {
       </div>
     );
   }
-
-  const currency = currentUser?.country?.currency || 'KES';
 
   return (
     <div>
