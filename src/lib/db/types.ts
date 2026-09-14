@@ -31,6 +31,7 @@ export type ProjectStatus =
   | 'DRAFT'
   | 'AWAITING_PAYMENT'
   | 'PLANNING'
+  | 'IN_PROGRESS'
   | 'DEVELOPMENT'
   | 'INTERNAL_REVIEW'
   | 'CLIENT_REVIEW'

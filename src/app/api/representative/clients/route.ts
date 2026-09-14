@@ -98,9 +98,9 @@ export async function POST(req: NextRequest) {
         const lastName = rest.join(' ') || 'Client';
 
         await tx.execute(`
-          INSERT INTO user_profiles (id, user_id, first_name, last_name, phone, created_at, updated_at)
-          VALUES (?, ?, ?, ?, ?, datetime('now'), datetime('now'))
-        `, [`prof_${targetUserId}`, targetUserId, firstName, lastName, phone || '']);
+          INSERT INTO user_profiles (user_id, first_name, last_name, phone, country_id, timezone, updated_at)
+          VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
+        `, [targetUserId, firstName, lastName, phone || '', rep?.country_id || fallbackCountryId, isNigeria ? 'Africa/Lagos' : 'Africa/Nairobi']);
       }
 
       // 2. Create Client Record locked to this Representative

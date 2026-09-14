@@ -494,6 +494,19 @@ export async function confirmRefundSuccess(params: {
           VALUES (?, 'REPRESENTATIVE', ?, ?, ?, ?, 0, 'OPEN', datetime('now'), datetime('now'))
         `, [recoveryId, targetRepId, refund.id, refund.currency, commissionReversalMinor]);
 
+        const adjId = `adj_rec_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+        await tx.execute(`
+          INSERT INTO commission_adjustments (
+            id, sales_rep_id, commission_id, refund_id, adjustment_type,
+            currency, amount_minor, recovery_status, notes, created_at
+          )
+          VALUES (?, ?, ?, ?, 'CLAWBACK_RECOVERY', ?, ?, 'RECOVERY_PENDING', ?, datetime('now'))
+        `, [
+          adjId, targetRepId, targetCommissionId || refund.payment_id, refund.id,
+          refund.currency, commissionReversalMinor,
+          `Recovery obligation created for refunded payment ${refund.payment_id}`
+        ]);
+
         await recordRecoveryReceivableLedgerEntry(tx, {
           salesRepId: targetRepId,
           refundId: refund.id,
@@ -508,10 +521,10 @@ export async function confirmRefundSuccess(params: {
         // Commission was not yet paid: reduce commission amount and book ledger reversal
         await tx.execute(`
           UPDATE commissions
-          SET commission_amount_minor = GREATEST(0, commission_amount_minor - ?),
+          SET commission_amount_minor = CASE WHEN commission_amount_minor >= ? THEN commission_amount_minor - ? ELSE 0 END,
               updated_at = datetime('now')
           WHERE id = ?
-        `, [commissionReversalMinor, targetCommissionId]);
+        `, [commissionReversalMinor, commissionReversalMinor, targetCommissionId]);
 
         await recordCommissionReversalLedgerEntry(tx, {
           salesRepId: targetRepId,

@@ -42,6 +42,18 @@ const insertCountry = db.prepare(`
 insertCountry.run('c_ng', 'NG', 'Nigeria', 'NGN', '+234', 'Africa/Lagos', 1);
 insertCountry.run('c_ke', 'KE', 'Kenya', 'KES', '+254', 'Africa/Nairobi', 1);
 
+// 1b. Seed Foundational Territories
+console.log('-> Seeding Territories (NG, KE, GH, ZA, UG)...');
+const insertTerritory = db.prepare(`
+  INSERT OR REPLACE INTO territories (id, country_name, currency, default_payout_method, default_commission_rate_bps, direct_admin, is_active)
+  VALUES (?, ?, ?, ?, ?, ?, ?)
+`);
+insertTerritory.run('NG', 'Nigeria', 'NGN', 'BANK', 2000, 1, 1);
+insertTerritory.run('KE', 'Kenya', 'KES', 'MPESA', 2000, 0, 1);
+insertTerritory.run('GH', 'Ghana', 'GHS', 'MOBILE_MONEY', 2000, 0, 1);
+insertTerritory.run('ZA', 'South Africa', 'ZAR', 'BANK', 2000, 0, 1);
+insertTerritory.run('UG', 'Uganda', 'UGX', 'MOBILE_MONEY', 2000, 0, 1);
+
 // 2. Seed Services Catalog (Foundational Services + Mobile App Services + Third-Party Fees)
 console.log('-> Seeding CodeBridge Services & Third-Party Fee Items...');
 const insertService = db.prepare(`
@@ -133,6 +145,10 @@ const insertClient = db.prepare(`
   VALUES (?, ?, ?, ?, ?, ?)
 `);
 insertClient.run('cli_abc_rest', 'u_client_ke', '[DEMO DATA] ABC Hospitality & Restaurants', 'Food & Beverage', 'c_ke', 'rep_ke_active');
+
+// (8) AUTOMATED SYSTEM USER (Flutterwave Webhook & Ledger Verification)
+insertUser.run('system_flutterwave', 'system.flutterwave@codebridge.internal', 'LOCKED_SYSTEM_ACCOUNT', 'ADMIN', 'ACTIVE');
+insertProfile.run('system_flutterwave', 'System', 'Flutterwave Automated', '+00000000000', 'c_ng', 'Africa/Lagos');
 
 // 4. Seed Leads (Lifecycle demonstration)
 console.log('-> Seeding Demonstration Leads [DEMO DATA]...');

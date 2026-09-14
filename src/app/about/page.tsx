@@ -1,6 +1,6 @@
-// src/app/about/page.tsx
 'use client';
 
+import { useState } from 'react';
 import Navbar from '@/components/public/Navbar';
 import Footer from '@/components/public/Footer';
 import Link from 'next/link';
@@ -16,10 +16,40 @@ import {
   Award,
   Sparkles,
   Lock,
-  Layers
+  Layers,
+  ChevronDown,
+  HelpCircle,
 } from 'lucide-react';
 
 export default function AboutPage() {
+  const [openFaq, setOpenFaq] = useState<number | null>(0);
+
+  const faqItems = [
+    {
+      q: 'How does CodeBridge milestone-based escrow protect our budget?',
+      a: 'We divide every engineering engagement into clearly defined milestones (e.g. 50% kick-off deposit, 30% mid-project demo, 20% final user acceptance & launch). Funds are held securely and only settled once deliverables are tested, reviewed, and approved by your team.',
+    },
+    {
+      q: 'Who owns the intellectual property and source code?',
+      a: 'You retain 100% full legal ownership of the source code, system architectures, database schemas, and intellectual property. Complete repository transfer and production credentials handover are executed upon final project settlement with zero vendor lock-in.',
+    },
+    {
+      q: 'How are regional field representatives compensated and managed?',
+      a: 'Representatives receive unique partner codes (e.g. KEN-XXX or NGA-XXX). In field representative territories such as Kenya, representatives earn up to 20% commission on verified client payments, automatically tracked and disbursed via M-Pesa or local banking rails.',
+    },
+    {
+      q: 'What technologies and frameworks does CodeBridge build with?',
+      a: 'We engineer using proven, enterprise-grade technology stacks: Next.js, React, Node.js, and TypeScript for web platforms; React Native and Flutter for mobile apps; and PostgreSQL, Supabase, and Redis for high-performance data and backend services.',
+    },
+    {
+      q: 'How does Google Play and Apple App Store publishing work?',
+      a: 'CodeBridge prepares production bundles, signing certificates, app assets, and platform privacy documentation. We guide clients through registering their own developer accounts ($25 one-time for Google, $99/year for Apple) so you retain lifetime store ownership.',
+    },
+    {
+      q: 'Can our business sign up directly to track projects and proposals?',
+      a: 'Yes! Clients can register directly via /register to access their private client portal. From the dashboard, you can track development milestones, review commercial quotes, approve deliverables, and communicate securely with our engineering team.',
+    },
+  ];
   const corePillars = [
     {
       icon: Globe,
@@ -340,7 +370,104 @@ export default function AboutPage() {
             </motion.div>
 
             {/* ============================================================= */}
-            {/* 4. CALL TO ACTION                                             */}
+            {/* 4. FREQUENTLY ASKED QUESTIONS (FAQ ACCORDION)                */}
+            {/* ============================================================= */}
+            <div id="faq" style={{ scrollMarginTop: '100px', marginBottom: '80px' }}>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                style={{ textAlign: 'center', marginBottom: '40px' }}
+              >
+                <div style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '4px 12px',
+                  borderRadius: '6px',
+                  backgroundColor: 'rgba(0, 180, 216, 0.1)',
+                  color: 'var(--cb-cyan-500)',
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
+                  marginBottom: '10px',
+                }}>
+                  <HelpCircle size={14} />
+                  Platform &amp; Engagement FAQs
+                </div>
+                <h2 style={{ fontSize: '28px', fontWeight: 800, color: 'var(--cb-text-primary)', letterSpacing: '-0.02em', marginBottom: '8px' }}>
+                  Frequently Asked Questions
+                </h2>
+                <p style={{ fontSize: '15px', color: 'var(--cb-text-secondary)', maxWidth: '600px', margin: '0 auto' }}>
+                  Everything you need to know about our engineering process, commercial governance, and client guarantees.
+                </p>
+              </motion.div>
+
+              <div style={{ maxWidth: '780px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                {faqItems.map((item, idx) => {
+                  const isOpen = openFaq === idx;
+                  return (
+                    <div
+                      key={idx}
+                      className="cb-glass"
+                      style={{
+                        borderRadius: '14px',
+                        border: isOpen ? '1px solid var(--cb-cyan-500)' : '1px solid var(--cb-border-subtle)',
+                        overflow: 'hidden',
+                        transition: 'all 0.2s ease',
+                      }}
+                    >
+                      <button
+                        onClick={() => setOpenFaq(isOpen ? null : idx)}
+                        style={{
+                          width: '100%',
+                          padding: '20px 24px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          background: 'none',
+                          border: 'none',
+                          cursor: 'pointer',
+                          textAlign: 'left',
+                          color: 'var(--cb-text-primary)',
+                        }}
+                      >
+                        <span style={{ fontSize: '16px', fontWeight: 700, letterSpacing: '-0.01em', paddingRight: '16px' }}>
+                          {item.q}
+                        </span>
+                        <ChevronDown
+                          size={18}
+                          style={{
+                            flexShrink: 0,
+                            color: isOpen ? 'var(--cb-cyan-500)' : 'var(--cb-text-muted)',
+                            transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                            transition: 'transform 0.2s ease, color 0.2s ease',
+                          }}
+                        />
+                      </button>
+
+                      {isOpen && (
+                        <div
+                          style={{
+                            padding: '0 24px 22px 24px',
+                            fontSize: '14px',
+                            lineHeight: 1.65,
+                            color: 'var(--cb-text-secondary)',
+                            borderTop: '1px solid var(--cb-border-subtle)',
+                            paddingTop: '14px',
+                          }}
+                        >
+                          {item.a}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* ============================================================= */}
+            {/* 5. CALL TO ACTION                                             */}
             {/* ============================================================= */}
             <motion.div 
               initial={{ opacity: 0, scale: 0.95 }}

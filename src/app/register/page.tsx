@@ -1,7 +1,7 @@
 // src/app/register/page.tsx
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, AlertCircle, Briefcase, Users, Mail, Lock, Building, Phone, Globe } from 'lucide-react';
@@ -10,7 +10,8 @@ import CodeBridgeLogo from '@/components/common/CodeBridgeLogo';
 export default function RegisterPage() {
   const router = useRouter();
 
-  const [accountType, setAccountType] = useState<'CLIENT' | 'REPRESENTATIVE'>('REPRESENTATIVE');
+  const [accountType, setAccountType] = useState<'CLIENT' | 'REPRESENTATIVE'>('CLIENT');
+  const [referralCode, setReferralCode] = useState('');
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -24,6 +25,19 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
+  // Read URL search params on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const ref = params.get('ref');
+      if (ref) setReferralCode(ref.trim());
+      const type = params.get('type')?.toUpperCase();
+      if (type === 'REPRESENTATIVE' || type === 'REP') {
+        setAccountType('REPRESENTATIVE');
+      }
+    }
+  }, []);
+
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -36,6 +50,7 @@ export default function RegisterPage() {
         body: JSON.stringify({
           ...formData,
           accountType,
+          referralCode: referralCode || undefined,
         }),
       });
 
@@ -203,6 +218,25 @@ export default function RegisterPage() {
           </button>
         </div>
 
+        {referralCode && (
+          <div style={{
+            padding: '10px 14px',
+            borderRadius: '10px',
+            backgroundColor: 'rgba(0, 180, 216, 0.08)',
+            border: '1px solid rgba(0, 180, 216, 0.3)',
+            color: '#00B4D8',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            marginBottom: '20px',
+            fontSize: '13px',
+            fontWeight: 600,
+          }}>
+            <Briefcase size={16} style={{ flexShrink: 0 }} />
+            <span>Referral code active: <strong>{referralCode}</strong>. Your account will be attributed to an authorized regional representative.</span>
+          </div>
+        )}
+
         {errorMsg && (
           <div style={{
             padding: '12px 14px',
@@ -221,108 +255,104 @@ export default function RegisterPage() {
           </div>
         )}
 
-        {/* =============================================================== */}
-        {/* ROLE A: Sales Representative -> Google-Only Authentication      */}
-        {/* =============================================================== */}
-        {accountType === 'REPRESENTATIVE' ? (
-          <div style={{ padding: '8px 0 16px', textAlign: 'center' }}>
-            <a
-              href="/api/auth/google"
-              className="cb-btn cb-btn-outline-pill"
-              style={{
-                width: '100%',
-                padding: '16px 20px',
-                fontSize: '15px',
-                fontWeight: 600,
-                backgroundColor: 'var(--cb-bg-card)',
-                color: 'var(--cb-text-primary)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '12px',
-                boxShadow: '0 2px 6px rgba(0,0,0,0.06)',
-                border: '1px solid var(--cb-border-subtle)',
-                textDecoration: 'none',
-                transition: 'all 0.15s ease',
-              }}
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24">
-                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-              </svg>
-              <div style={{ textAlign: 'left' }}>
-                <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--cb-text-primary)' }}>Continue with Google</div>
-                <div style={{ fontSize: '11px', color: 'var(--cb-text-muted)', fontWeight: 500 }}>Quick and secure registration</div>
+        {/* Unified Registration Form */}
+        <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          {accountType === 'REPRESENTATIVE' && (
+            <>
+              <div style={{ textAlign: 'center', marginBottom: '8px' }}>
+                <a
+                  href="/api/auth/google"
+                  className="cb-btn cb-btn-outline-pill"
+                  style={{
+                    width: '100%',
+                    padding: '14px 20px',
+                    fontSize: '14px',
+                    fontWeight: 600,
+                    backgroundColor: 'var(--cb-bg-card)',
+                    color: 'var(--cb-text-primary)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '12px',
+                    boxShadow: '0 2px 6px rgba(0,0,0,0.06)',
+                    border: '1px solid var(--cb-border-subtle)',
+                    textDecoration: 'none',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                  </svg>
+                  <span>Continue with Google</span>
+                </a>
+                
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  margin: '18px 0 12px',
+                  color: 'var(--cb-text-muted)',
+                  fontSize: '12px',
+                }}>
+                  <div style={{ flex: 1, height: '1px', backgroundColor: 'var(--cb-border-subtle)' }} />
+                  <span>OR REGISTER WITH EMAIL</span>
+                  <div style={{ flex: 1, height: '1px', backgroundColor: 'var(--cb-border-subtle)' }} />
+                </div>
               </div>
-            </a>
+            </>
+          )}
 
-            <div style={{
-              marginTop: '20px',
-              padding: '12px 16px',
-              backgroundColor: 'var(--cb-bg-subtle)',
-              borderRadius: '10px',
-              border: '1px solid var(--cb-border-subtle)',
-              fontSize: '12px',
-              color: 'var(--cb-text-secondary)',
-              lineHeight: 1.5,
-            }}>
-              Instant workspace activation &bull; Global support &bull; Direct monthly commission settlement
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            <div>
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--cb-text-primary)', marginBottom: '6px' }}>
+                First Name
+              </label>
+              <input
+                type="text"
+                required
+                placeholder="Jane"
+                value={formData.firstName}
+                onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  borderRadius: '8px',
+                  border: '1px solid var(--cb-border-subtle)',
+                  backgroundColor: 'var(--cb-bg-input)',
+                  color: 'var(--cb-text-primary)',
+                  fontSize: '14px',
+                  outline: 'none',
+                }}
+              />
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--cb-text-primary)', marginBottom: '6px' }}>
+                Last Name
+              </label>
+              <input
+                type="text"
+                required
+                placeholder="Doe"
+                value={formData.lastName}
+                onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  borderRadius: '8px',
+                  border: '1px solid var(--cb-border-subtle)',
+                  backgroundColor: 'var(--cb-bg-input)',
+                  color: 'var(--cb-text-primary)',
+                  fontSize: '14px',
+                  outline: 'none',
+                }}
+              />
             </div>
           </div>
-        ) : (
-          /* ============================================================= */
-          /* ROLE B: Client Account -> Standard Registration Form          */
-          /* ============================================================= */
-          <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-              <div>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--cb-text-primary)', marginBottom: '6px' }}>
-                  First Name
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Jane"
-                  value={formData.firstName}
-                  onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    borderRadius: '8px',
-                    border: '1px solid var(--cb-border-subtle)',
-                    backgroundColor: 'var(--cb-bg-input)',
-                    color: 'var(--cb-text-primary)',
-                    fontSize: '14px',
-                    outline: 'none',
-                  }}
-                />
-              </div>
-              <div>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--cb-text-primary)', marginBottom: '6px' }}>
-                  Last Name
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Doe"
-                  value={formData.lastName}
-                  onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    borderRadius: '8px',
-                    border: '1px solid var(--cb-border-subtle)',
-                    backgroundColor: 'var(--cb-bg-input)',
-                    color: 'var(--cb-text-primary)',
-                    fontSize: '14px',
-                    outline: 'none',
-                  }}
-                />
-              </div>
-            </div>
 
+          {accountType === 'CLIENT' && (
             <div>
               <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--cb-text-primary)', marginBottom: '6px' }}>
                 Business / Company Name
@@ -350,106 +380,23 @@ export default function RegisterPage() {
                 />
               </div>
             </div>
+          )}
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-              <div>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--cb-text-primary)', marginBottom: '6px' }}>
-                  Work Email
-                </label>
-                <div style={{ position: 'relative' }}>
-                  <div style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--cb-text-muted)' }}>
-                    <Mail size={16} />
-                  </div>
-                  <input
-                    type="email"
-                    required
-                    placeholder="jane@company.com"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    style={{
-                      width: '100%',
-                      padding: '10px 12px 10px 36px',
-                      borderRadius: '8px',
-                      border: '1px solid var(--cb-border-subtle)',
-                      backgroundColor: 'var(--cb-bg-input)',
-                      color: 'var(--cb-text-primary)',
-                      fontSize: '14px',
-                      outline: 'none',
-                    }}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--cb-text-primary)', marginBottom: '6px' }}>
-                  Country
-                </label>
-                <div style={{ position: 'relative' }}>
-                  <div style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--cb-text-muted)' }}>
-                    <Globe size={16} />
-                  </div>
-                  <select
-                    value={formData.countryCode}
-                    onChange={(e) => setFormData({ ...formData, countryCode: e.target.value })}
-                    style={{
-                      width: '100%',
-                      padding: '10px 12px 10px 36px',
-                      borderRadius: '8px',
-                      border: '1px solid var(--cb-border-subtle)',
-                      backgroundColor: 'var(--cb-bg-input)',
-                      color: 'var(--cb-text-primary)',
-                      fontSize: '14px',
-                      outline: 'none',
-                    }}
-                  >
-                    <option value="NG">Nigeria</option>
-                    <option value="KE">Kenya</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
             <div>
               <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--cb-text-primary)', marginBottom: '6px' }}>
-                Phone Number
+                {accountType === 'REPRESENTATIVE' ? 'Email Address' : 'Work Email'}
               </label>
               <div style={{ position: 'relative' }}>
                 <div style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--cb-text-muted)' }}>
-                  <Phone size={16} />
+                  <Mail size={16} />
                 </div>
                 <input
-                  type="tel"
-                  placeholder="+234 801 234 5678"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px 10px 36px',
-                    borderRadius: '8px',
-                    border: '1px solid var(--cb-border-subtle)',
-                    backgroundColor: 'var(--cb-bg-input)',
-                    color: 'var(--cb-text-primary)',
-                    fontSize: '14px',
-                    outline: 'none',
-                  }}
-                />
-              </div>
-            </div>
-
-            <div>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--cb-text-primary)', marginBottom: '6px' }}>
-                Password (min. 8 characters)
-              </label>
-              <div style={{ position: 'relative' }}>
-                <div style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--cb-text-muted)' }}>
-                  <Lock size={16} />
-                </div>
-                <input
-                  type="password"
+                  type="email"
                   required
-                  placeholder="Create a strong password"
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  placeholder={accountType === 'REPRESENTATIVE' ? 'jane.rep@codebridge.com' : 'jane@company.com'}
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   style={{
                     width: '100%',
                     padding: '10px 12px 10px 36px',
@@ -464,23 +411,111 @@ export default function RegisterPage() {
               </div>
             </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="cb-btn cb-btn-cyan"
-              style={{
-                width: '100%',
-                padding: '12px',
-                fontSize: '15px',
-                marginTop: '6px',
-                cursor: loading ? 'not-allowed' : 'pointer',
-                opacity: loading ? 0.75 : 1,
-              }}
-            >
-              {loading ? 'Creating account...' : 'Create Client Account'}
-            </button>
-          </form>
-        )}
+            <div>
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--cb-text-primary)', marginBottom: '6px' }}>
+                {accountType === 'REPRESENTATIVE' ? 'Operating Country' : 'Country'}
+              </label>
+              <div style={{ position: 'relative' }}>
+                <div style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--cb-text-muted)' }}>
+                  <Globe size={16} />
+                </div>
+                <select
+                  value={formData.countryCode}
+                  onChange={(e) => setFormData({ ...formData, countryCode: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px 10px 36px',
+                    borderRadius: '8px',
+                    border: '1px solid var(--cb-border-subtle)',
+                    backgroundColor: 'var(--cb-bg-input)',
+                    color: 'var(--cb-text-primary)',
+                    fontSize: '14px',
+                    outline: 'none',
+                  }}
+                >
+                  <option value="NG">Nigeria (NGN)</option>
+                  <option value="KE">Kenya (KES)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--cb-text-primary)', marginBottom: '6px' }}>
+              {accountType === 'REPRESENTATIVE' ? 'Phone / WhatsApp' : 'Phone Number'}
+            </label>
+            <div style={{ position: 'relative' }}>
+              <div style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--cb-text-muted)' }}>
+                <Phone size={16} />
+              </div>
+              <input
+                type="tel"
+                placeholder={formData.countryCode === 'KE' ? '+254 712 345 678' : '+234 801 234 5678'}
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                style={{
+                  width: '100%',
+                  padding: '10px 12px 10px 36px',
+                  borderRadius: '8px',
+                  border: '1px solid var(--cb-border-subtle)',
+                  backgroundColor: 'var(--cb-bg-input)',
+                  color: 'var(--cb-text-primary)',
+                  fontSize: '14px',
+                  outline: 'none',
+                }}
+              />
+            </div>
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--cb-text-primary)', marginBottom: '6px' }}>
+              Password (min. 8 characters)
+            </label>
+            <div style={{ position: 'relative' }}>
+              <div style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--cb-text-muted)' }}>
+                <Lock size={16} />
+              </div>
+              <input
+                type="password"
+                required
+                placeholder="Create a strong password"
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                style={{
+                  width: '100%',
+                  padding: '10px 12px 10px 36px',
+                  borderRadius: '8px',
+                  border: '1px solid var(--cb-border-subtle)',
+                  backgroundColor: 'var(--cb-bg-input)',
+                  color: 'var(--cb-text-primary)',
+                  fontSize: '14px',
+                  outline: 'none',
+                }}
+              />
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="cb-btn cb-btn-cyan"
+            style={{
+              width: '100%',
+              padding: '13px',
+              fontSize: '15px',
+              fontWeight: 700,
+              marginTop: '6px',
+              cursor: loading ? 'not-allowed' : 'pointer',
+              opacity: loading ? 0.75 : 1,
+            }}
+          >
+            {loading 
+              ? 'Creating account...' 
+              : accountType === 'REPRESENTATIVE'
+              ? 'Create Sales Representative Account'
+              : 'Create Client Account'}
+          </button>
+        </form>
 
         {/* Footer Link */}
         <div style={{ marginTop: '28px', textAlign: 'center', fontSize: '13px', color: 'var(--cb-text-secondary)' }}>

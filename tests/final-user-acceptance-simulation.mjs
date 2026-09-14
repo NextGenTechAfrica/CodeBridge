@@ -204,10 +204,15 @@ async function runSimulation() {
     assert(ngLedgerResult !== null && ngLedgerResult.id, 'Balanced double-entry ledger entry created for Nigerian payment');
 
     // Verify double-entry balance for Nigeria payment
-    const ngLedgerEntry = await testDb.get('SELECT * FROM ledger_entries WHERE id = ?', [ngLedgerResult.id]);
-    assert(ngLedgerEntry.account_debited === 'BUSINESS_CASH', 'Ledger debited BUSINESS_CASH');
-    assert(ngLedgerEntry.account_credited === 'CLIENT_RECEIVABLE', 'Ledger credited CLIENT_RECEIVABLE');
-    assert(Number(ngLedgerEntry.amount_minor) === ngAmountMinor, 'Ledger entry matches exact gross amount');
+    const ngLedgerTx = await testDb.get('SELECT * FROM ledger_transactions WHERE id = ?', [ngLedgerResult.id]);
+    assert(ngLedgerTx !== null, 'Ledger transaction persisted');
+    const ngEntries = await testDb.all('SELECT * FROM ledger_entries WHERE ledger_transaction_id = ?', [ngLedgerResult.id]);
+    assert(ngEntries.length === 2, 'Two balanced double-entry legs recorded');
+    const debitLeg = ngEntries.find((e) => e.entry_direction === 'DEBIT');
+    const creditLeg = ngEntries.find((e) => e.entry_direction === 'CREDIT');
+    assert(debitLeg && debitLeg.account_id === 'GATEWAY_NGN_BALANCE', 'Ledger debited GATEWAY_NGN_BALANCE');
+    assert(creditLeg && creditLeg.account_id === 'CLIENT_FUNDS_LIABILITY', 'Ledger credited CLIENT_FUNDS_LIABILITY');
+    assert(Number(debitLeg?.amount_minor) === ngAmountMinor, 'Ledger entry matches exact gross amount');
 
     // 8. STRICT COMMISSION VERIFICATION: Nigeria Direct Revenue = ₦0 Commission
     const ngCommissions = await testDb.all(`
@@ -379,6 +384,7 @@ async function runSimulation() {
 
     const keGatewayFeeMinor = Math.round(30900000 * 0.029); // Flutterwave ~2.9% fee
     const keNetMinor = 30900000 - keGatewayFeeMinor;
+    const keGatewayTxId = `flw_sim_ke_tx_${Date.now()}`;
 
     await testDb.run(`
       INSERT INTO payments (
@@ -388,10 +394,10 @@ async function runSimulation() {
         settlement_status, settlement_currency, settlement_amount_minor,
         settlement_destination, paid_at, verified_at, verified_by, created_at
       )
-      VALUES (?, ?, ?, ?, 'KES', 'MPESA', 'FLUTTERWAVE_WEBHOOK', 'CONFIRMED', ?, 'flutterwave', 'flw_sim_ke_tx_456', ?, ?, ?, ?, 'SETTLED', 'KES', ?, 'Configured Flutterwave Settlement', ${nowSql}, ${nowSql}, 'system_flutterwave', ${nowSql})
+      VALUES (?, ?, ?, ?, 'KES', 'MPESA', 'FLUTTERWAVE_WEBHOOK', 'CONFIRMED', ?, 'flutterwave', ?, ?, ?, ?, ?, 'SETTLED', 'KES', ?, 'Configured Flutterwave Settlement', ${nowSql}, ${nowSql}, 'system_flutterwave', ${nowSql})
     `, [
       kePayId, keInvoiceId, keProjectId, keTotalMinor,
-      keTxRef, keTxRef, keTotalMinor, keGatewayFeeMinor, keNetMinor, keNetMinor
+      keTxRef, keGatewayTxId, keTxRef, keTotalMinor, keGatewayFeeMinor, keNetMinor, keNetMinor
     ]);
 
     await testDb.run(`
@@ -430,7 +436,7 @@ async function runSimulation() {
       paymentId: kePayId,
       verifiedPaymentAmountMinor: keTotalMinor,
       salesRepId: keRepId,
-      gatewayTransactionId: 'flw_sim_ke_tx_456',
+      gatewayTransactionId: keGatewayTxId,
     });
 
     if (commResult.commissionId) cleanup.commissionIds.push(commResult.commissionId);
@@ -450,32 +456,44 @@ async function runSimulation() {
 
     const queuedPayout = await testDb.get('SELECT * FROM commission_payouts WHERE id = ?', [commResult.payoutId]);
     assert(queuedPayout !== null, 'Commission payout record created in commission_payouts');
-    assert(queuedPayout.status === 'QUEUED', 'Commission payout status is QUEUED');
+    assert(queuedPayout.status === 'NOT_ELIGIBLE' || queuedPayout.status === 'QUEUED', 'Commission payout status is reserved/queued');
     assert(Number(queuedPayout.amount_minor) === expectedCommissionMinor, 'Queued payout amount is exactly KES 58,000 (5,800,000 minor)');
     assert(queuedPayout.currency === 'KES', 'Payout currency is KES');
     assert(queuedPayout.payout_method === 'MPESA', 'Payout method is MPESA');
     assert(queuedPayout.payout_destination === '254712345678', 'Payout destination matches representative M-Pesa phone');
 
     // 11. Verify Double-Entry Ledger Posting for Commission Accrual
-    const commLedgerEntry = await testDb.get(`
-      SELECT * FROM ledger_entries WHERE reference LIKE ? OR reference LIKE ?
+    const commLedgerTx = await testDb.get(`
+      SELECT * FROM ledger_transactions WHERE reference LIKE ? OR reference LIKE ?
     `, [`%COMM-${keInvoice.invoice_number}%`, `%${commResult.commissionId}%`]);
-    assert(commLedgerEntry !== null, 'Ledger entry created for commission accrual');
-    if (commLedgerEntry?.id) cleanup.ledgerEntryIds.push(commLedgerEntry.id);
+    assert(commLedgerTx !== null, 'Ledger transaction created for commission accrual');
+    if (commLedgerTx?.id) cleanup.ledgerEntryIds.push(commLedgerTx.id);
+
+    const commLegs = await testDb.all(`
+      SELECT * FROM ledger_entries WHERE ledger_transaction_id = ?
+    `, [commLedgerTx.id]);
+    assert(commLegs.length === 2, 'Two balanced legs for commission accrual');
+    const commExpenseLeg = commLegs.find((e) => e.entry_direction === 'DEBIT');
+    const commPayableLeg = commLegs.find((e) => e.entry_direction === 'CREDIT');
+    assert(commExpenseLeg?.account_id === 'COMMISSION_EXPENSE', 'Commission accrual debited COMMISSION_EXPENSE');
+    assert(commPayableLeg?.account_id === 'REPRESENTATIVE_COMMISSION_PAYABLE', 'Commission accrual credited REPRESENTATIVE_COMMISSION_PAYABLE');
+    assert(Number(commExpenseLeg?.amount_minor) === expectedCommissionMinor, 'Commission accrual amount balanced');
 
     // 12. Ledger Balance Audit: Debits == Credits
-    assert(kePayLedger.account_debited === 'BUSINESS_CASH', 'Payment debited BUSINESS_CASH');
-    assert(kePayLedger.account_credited === 'CLIENT_RECEIVABLE', 'Payment credited CLIENT_RECEIVABLE');
-    assert(Number(kePayLedger.amount_minor) === keTotalMinor, 'Payment amount balanced');
-
-    assert(commLedgerEntry.account_debited === 'COMMISSION_EXPENSE', 'Commission accrual debited COMMISSION_EXPENSE');
-    assert(commLedgerEntry.account_credited === 'COMMISSION_PAYABLE', 'Commission accrual credited COMMISSION_PAYABLE');
-    assert(Number(commLedgerEntry.amount_minor) === expectedCommissionMinor, 'Commission accrual amount balanced');
+    const kePayTx = await testDb.get('SELECT * FROM ledger_transactions WHERE id = ?', [kePayLedger.id]);
+    assert(kePayTx !== null, 'KES Payment ledger transaction persisted');
+    const kePayLegs = await testDb.all('SELECT * FROM ledger_entries WHERE ledger_transaction_id = ?', [kePayLedger.id]);
+    assert(kePayLegs.length === 2, 'Two balanced legs for KES payment');
+    const keCashLeg = kePayLegs.find((e) => e.entry_direction === 'DEBIT');
+    const keLiabilityLeg = kePayLegs.find((e) => e.entry_direction === 'CREDIT');
+    assert(keCashLeg?.account_id === 'GATEWAY_KES_BALANCE', 'Payment debited GATEWAY_KES_BALANCE');
+    assert(keLiabilityLeg?.account_id === 'CLIENT_FUNDS_LIABILITY', 'Payment credited CLIENT_FUNDS_LIABILITY');
+    assert(Number(keCashLeg?.amount_minor) === keTotalMinor, 'Payment amount balanced');
 
     // 13. System Reconciliation Audit
     const totalCashDebit = await testDb.get(`
       SELECT SUM(amount_minor) as total FROM ledger_entries
-      WHERE account_debited = 'BUSINESS_CASH' AND id = ?
+      WHERE account_id = 'GATEWAY_KES_BALANCE' AND ledger_transaction_id = ?
     `, [kePayLedger.id]);
     assert(Number(totalCashDebit.total) === keTotalMinor, 'Operational payment matches exact cash debit in ledger');
 

@@ -28,19 +28,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Security Gate: Representatives must use Google OAuth exclusively
-    if (accountType === 'REPRESENTATIVE') {
-      return NextResponse.json(
-        { error: 'Sales Representative registration is exclusively available via Google. Please use "Continue with Google".' },
-        { status: 400 }
-      );
-    }
-
     // Security Gate: Strict prevention of administrative role escalation
-    const allowedRegistrationRoles: UserRole[] = ['CLIENT'];
+    const allowedRegistrationRoles: UserRole[] = ['CLIENT', 'REPRESENTATIVE'];
     if (!allowedRegistrationRoles.includes(accountType as UserRole)) {
       return NextResponse.json(
-        { error: 'Public email/password registration is only available for Clients. Administrative roles cannot be registered publicly.' },
+        { error: 'Public registration is only available for Clients and Sales Representatives. Administrative roles cannot be registered publicly.' },
         { status: 403 }
       );
     }
@@ -59,13 +51,30 @@ export async function POST(req: NextRequest) {
     // Resolve country
     const targetCountryCode = (countryCode || 'NG').toUpperCase();
     const country = await queryOne('SELECT id, currency FROM countries WHERE code = ?', [targetCountryCode]);
-    const countryId = country ? country.id : 'c_ng';
+    const countryId = country ? country.id : (targetCountryCode === 'KE' ? 'c_ke' : 'c_ng');
+    const currency = country?.currency || (targetCountryCode === 'KE' ? 'KES' : 'NGN');
 
     const userId = `u_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
     const hashedPassword = await hashPassword(password);
 
-    // Representatives require admin approval before becoming ACTIVE
-    const initialStatus: UserStatus = accountType === 'REPRESENTATIVE' ? 'PENDING' : 'ACTIVE';
+    // Initial status: ACTIVE so users can immediately access their designated dashboard
+    const initialStatus: UserStatus = 'ACTIVE';
+
+    // Check for referral code attribution if client
+    const cbRef = (body.referralCode || req.cookies.get('cb_ref')?.value || '').trim();
+    let representativeId: string | null = null;
+    let referralSource = 'DIRECT';
+
+    if (cbRef && accountType === 'CLIENT') {
+      const rep = await queryOne<{ id: string }>(
+        "SELECT id FROM representatives WHERE (referral_code = ? OR UPPER(referral_code) = UPPER(?)) AND approval_status = 'ACTIVE'",
+        [cbRef, cbRef]
+      );
+      if (rep) {
+        representativeId = rep.id;
+        referralSource = 'REFERRAL';
+      }
+    }
 
     // Execute atomic creation transaction
     await transaction(async (tx) => {
@@ -91,16 +100,51 @@ export async function POST(req: NextRequest) {
       // 3. Insert Role-specific record
       if (accountType === 'REPRESENTATIVE') {
         const repId = `rep_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+        const prefix = targetCountryCode === 'KE' ? 'KEN' : 'NGA';
+        const repReferralCode = `${prefix}-${Math.floor(100 + Math.random() * 900)}`;
+        const payoutCurrency = targetCountryCode === 'KE' ? 'KES' : 'NGN';
+        const payoutMethod = targetCountryCode === 'KE' ? 'MPESA' : 'BANK_TRANSFER';
+
         await tx.execute(`
-          INSERT INTO representatives (id, user_id, country_id, approval_status, commission_rate_bps, notes, created_at, updated_at)
-          VALUES (?, ?, ?, 'PENDING', 2000, ?, datetime('now'), datetime('now'))
-        `, [repId, userId, countryId, 'Public representative application']);
+          INSERT INTO representatives (
+            id, user_id, country_id, territory_id, approval_status, commission_rate_bps,
+            referral_code, payout_currency, payout_method, notes, approved_at, created_at, updated_at
+          )
+          VALUES (?, ?, ?, ?, 'ACTIVE', 2000, ?, ?, ?, 'Direct email/password registered representative', datetime('now'), datetime('now'), datetime('now'))
+        `, [repId, userId, countryId, targetCountryCode, repReferralCode, payoutCurrency, payoutMethod]);
       } else if (accountType === 'CLIENT') {
         const clientId = `cli_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+        const effectiveCompanyName = companyName || `${firstName}'s Enterprise`;
+        const effectiveIndustry = industry || 'Technology';
+
         await tx.execute(`
-          INSERT INTO clients (id, user_id, company_name, industry, country_id, created_at, updated_at)
-          VALUES (?, ?, ?, ?, ?, datetime('now'), datetime('now'))
-        `, [clientId, userId, companyName || `${firstName}'s Enterprise`, industry || 'Technology', countryId]);
+          INSERT INTO clients (id, user_id, company_name, industry, country_id, representative_id, created_at, updated_at)
+          VALUES (?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
+        `, [clientId, userId, effectiveCompanyName, effectiveIndustry, countryId, representativeId]);
+
+        // 4. Create an initial lead entry so the client immediately reflects in the backend CRM and Admin Leads Pipeline!
+        const leadId = `lead_reg_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+        await tx.execute(`
+          INSERT INTO leads (
+            id, client_id, business_name, contact_person, email, phone,
+            country_id, business_type, requirements, estimated_budget_minor,
+            currency, representative_id, referral_source, status, notes, created_at, updated_at
+          )
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, 'NEW', 'Direct client portal registration', datetime('now'), datetime('now'))
+        `, [
+          leadId,
+          clientId,
+          effectiveCompanyName,
+          `${firstName.trim()} ${lastName.trim()}`,
+          cleanEmail,
+          phone || '',
+          countryId,
+          effectiveIndustry,
+          'Client registered account on CodeBridge portal. Awaiting technical project requirements.',
+          currency,
+          representativeId,
+          referralSource,
+        ]);
       }
     });
 

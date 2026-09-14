@@ -44,8 +44,20 @@ class TestDbAdapter {
       });
     } else {
       this.isPg = false;
-      const dbPath = path.resolve(process.cwd(), './data/codebridge.db');
+      const dataDir = path.resolve(process.cwd(), './data');
+      if (!fs.existsSync(dataDir)) {
+        fs.mkdirSync(dataDir, { recursive: true });
+      }
+      const dbPath = path.join(dataDir, 'codebridge.db');
       this.sqlite = new DatabaseSync(dbPath);
+
+      // Ensure system_flutterwave automated user exists for FK integrity
+      try {
+        this.sqlite.exec(`
+          INSERT OR IGNORE INTO users (id, email, password_hash, role, status, email_verified)
+          VALUES ('system_flutterwave', 'system.flutterwave@codebridge.internal', 'LOCKED_SYSTEM_ACCOUNT', 'ADMIN', 'ACTIVE', 1);
+        `);
+      } catch {}
     }
   }
 

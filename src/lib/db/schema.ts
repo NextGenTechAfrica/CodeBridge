@@ -43,9 +43,15 @@ CREATE TABLE IF NOT EXISTS representatives (
   id TEXT PRIMARY KEY,
   user_id TEXT UNIQUE NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   country_id TEXT NOT NULL REFERENCES countries(id),
+  territory_id TEXT REFERENCES territories(id),
   approval_status TEXT NOT NULL DEFAULT 'PENDING' CHECK (approval_status IN ('PENDING', 'ACTIVE', 'SUSPENDED', 'REJECTED')),
   commission_rate_bps INTEGER NOT NULL DEFAULT 2000, -- 2000 basis points = 20.00%
   referral_code TEXT UNIQUE,
+  payout_currency TEXT DEFAULT 'KES',
+  payout_method TEXT DEFAULT 'MPESA',
+  payout_destination TEXT,
+  payout_bank_code TEXT DEFAULT 'MPS',
+  payout_account_name TEXT,
   approved_at TEXT,
   approved_by TEXT REFERENCES users(id),
   notes TEXT,
@@ -116,7 +122,7 @@ CREATE TABLE IF NOT EXISTS projects (
   lead_id TEXT REFERENCES leads(id),
   service_id TEXT REFERENCES services(id),
   status TEXT NOT NULL DEFAULT 'PLANNING' CHECK (status IN (
-    'DRAFT', 'AWAITING_PAYMENT', 'PLANNING', 'DEVELOPMENT', 'INTERNAL_REVIEW',
+    'DRAFT', 'AWAITING_PAYMENT', 'PLANNING', 'IN_PROGRESS', 'DEVELOPMENT', 'INTERNAL_REVIEW',
     'CLIENT_REVIEW', 'REVISION', 'APPROVED', 'DEPLOYMENT',
     'COMPLETED', 'MAINTENANCE'
   )),
@@ -455,25 +461,51 @@ CREATE TABLE IF NOT EXISTS ledger_accounts (
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
--- Immutable Double-Entry Ledger Table
-CREATE TABLE IF NOT EXISTS ledger_entries (
+-- Double-Entry Ledger Transactions Table
+CREATE TABLE IF NOT EXISTS ledger_transactions (
   id TEXT PRIMARY KEY,
-  entry_type TEXT NOT NULL,
-  account_debited TEXT NOT NULL,
-  account_credited TEXT NOT NULL,
+  transaction_type TEXT NOT NULL,
   currency TEXT NOT NULL,
-  amount_minor INTEGER NOT NULL CHECK (amount_minor > 0),
+  reference TEXT NOT NULL,
   invoice_id TEXT,
   payment_id TEXT,
   sales_rep_id TEXT,
   project_id TEXT,
   client_id TEXT,
-  reference TEXT NOT NULL,
   notes TEXT,
   metadata_json TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+CREATE INDEX IF NOT EXISTS idx_ledger_tx_invoice ON ledger_transactions(invoice_id);
+CREATE INDEX IF NOT EXISTS idx_ledger_tx_payment ON ledger_transactions(payment_id);
+CREATE INDEX IF NOT EXISTS idx_ledger_tx_rep ON ledger_transactions(sales_rep_id);
+CREATE INDEX IF NOT EXISTS idx_ledger_tx_reference ON ledger_transactions(reference);
+CREATE INDEX IF NOT EXISTS idx_ledger_tx_type ON ledger_transactions(transaction_type);
+
+-- Immutable Double-Entry Ledger Entries Table
+CREATE TABLE IF NOT EXISTS ledger_entries (
+  id TEXT PRIMARY KEY,
+  ledger_transaction_id TEXT REFERENCES ledger_transactions(id),
+  account_id TEXT,
+  entry_direction TEXT CHECK (entry_direction IN ('DEBIT', 'CREDIT')),
+  amount_minor INTEGER NOT NULL CHECK (amount_minor > 0),
+  entry_type TEXT,
+  account_debited TEXT,
+  account_credited TEXT,
+  currency TEXT,
+  invoice_id TEXT,
+  payment_id TEXT,
+  sales_rep_id TEXT,
+  project_id TEXT,
+  client_id TEXT,
+  reference TEXT,
+  notes TEXT,
+  metadata_json TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_ledger_tx_id ON ledger_entries(ledger_transaction_id);
 CREATE INDEX IF NOT EXISTS idx_ledger_invoice ON ledger_entries(invoice_id);
 CREATE INDEX IF NOT EXISTS idx_ledger_payment ON ledger_entries(payment_id);
 CREATE INDEX IF NOT EXISTS idx_ledger_rep ON ledger_entries(sales_rep_id);
@@ -580,6 +612,7 @@ CREATE TABLE IF NOT EXISTS disputes (
   reason TEXT,
   resolution_notes TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now')),
   resolved_at TEXT
 );
 
@@ -692,6 +725,11 @@ END;
 CREATE TRIGGER IF NOT EXISTS prevent_delete_refunds BEFORE DELETE ON refunds
 BEGIN
   SELECT RAISE(ABORT, 'Financial Immutability Violation: DELETE is prohibited on refunds table.');
+END;
+
+CREATE TRIGGER IF NOT EXISTS prevent_delete_ledger_transactions BEFORE DELETE ON ledger_transactions
+BEGIN
+  SELECT RAISE(ABORT, 'Financial Immutability Violation: DELETE is prohibited on ledger_transactions table.');
 END;
 
 CREATE TRIGGER IF NOT EXISTS prevent_delete_ledger_entries BEFORE DELETE ON ledger_entries

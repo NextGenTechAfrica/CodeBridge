@@ -83,14 +83,23 @@ export async function recordDoubleEntry(
 
   await db.execute(`
     INSERT INTO ledger_entries (
-      id, ledger_transaction_id, account_id, entry_direction, amount_minor, created_at
+      id, ledger_transaction_id, account_id, entry_direction, amount_minor,
+      entry_type, account_debited, account_credited, currency,
+      invoice_id, payment_id, sales_rep_id, project_id, client_id, reference, notes, metadata_json, created_at
     )
     VALUES 
-    (?, ?, ?, 'DEBIT', ?, datetime('now')),
-    (?, ?, ?, 'CREDIT', ?, datetime('now'))
+    (?, ?, ?, 'DEBIT', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now')),
+    (?, ?, ?, 'CREDIT', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
   `, [
     debitId, txId, params.accountDebited, amountMinor,
-    creditId, txId, params.accountCredited, amountMinor
+    params.entryType, params.accountDebited, params.accountCredited, currency,
+    params.invoiceId || null, params.paymentId || null, params.salesRepId || null,
+    params.projectId || null, params.clientId || null, params.reference, params.notes || null, metadataJson,
+
+    creditId, txId, params.accountCredited, amountMinor,
+    params.entryType, params.accountDebited, params.accountCredited, currency,
+    params.invoiceId || null, params.paymentId || null, params.salesRepId || null,
+    params.projectId || null, params.clientId || null, params.reference, params.notes || null, metadataJson,
   ]);
 
   return {

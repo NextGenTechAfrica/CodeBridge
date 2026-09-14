@@ -89,6 +89,11 @@ export default function AdminOpsDashboard() {
   const [proposalSearchQuery, setProposalSearchQuery] = useState('');
   const [paymentFilterGateway, setPaymentFilterGateway] = useState('ALL');
 
+  // Registered Users & Clients State
+  const [usersList, setUsersList] = useState<any[]>([]);
+  const [userRoleFilter, setUserRoleFilter] = useState('ALL');
+  const [userSearchQuery, setUserSearchQuery] = useState('');
+
   // Payment Verification Modal State
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [selectedInvoiceForPayment, setSelectedInvoiceForPayment] = useState<any>(null);
@@ -162,7 +167,7 @@ export default function AdminOpsDashboard() {
 
   const loadData = async () => {
     try {
-      const [resMe, resLeads, resReps, resProjects, resProposals, resInvoices, resPayments, resServices, resReconciliation, resTerritories] = await Promise.all([
+      const [resMe, resLeads, resReps, resProjects, resProposals, resInvoices, resPayments, resServices, resReconciliation, resTerritories, resUsers] = await Promise.all([
         fetch('/api/me'),
         fetch('/api/leads'),
         fetch('/api/admin/representatives'),
@@ -173,6 +178,7 @@ export default function AdminOpsDashboard() {
         fetch('/api/services'),
         fetch('/api/admin/reconciliation'),
         fetch('/api/territories'),
+        fetch('/api/admin/users'),
       ]);
 
       if (resMe.ok) {
@@ -217,6 +223,10 @@ export default function AdminOpsDashboard() {
       if (resTerritories && resTerritories.ok) {
         const d = await resTerritories.json();
         setTerritories(d.territories || []);
+      }
+      if (resUsers && resUsers.ok) {
+        const d = await resUsers.json();
+        setUsersList(d.users || []);
       }
     } catch (err) {
       console.error('Failed to load operations data:', err);
@@ -674,6 +684,19 @@ export default function AdminOpsDashboard() {
     return matchesStatus && matchesQuery;
   });
 
+  const filteredUsers = usersList.filter((u) => {
+    const matchesRole = userRoleFilter === 'ALL' || u.role === userRoleFilter;
+    const q = userSearchQuery.trim().toLowerCase();
+    const fullName = `${u.first_name || ''} ${u.last_name || ''}`.toLowerCase();
+    const matchesQuery = !q ||
+      fullName.includes(q) ||
+      (u.email && u.email.toLowerCase().includes(q)) ||
+      (u.phone && u.phone.toLowerCase().includes(q)) ||
+      (u.company_name && u.company_name.toLowerCase().includes(q)) ||
+      (u.referral_code && u.referral_code.toLowerCase().includes(q));
+    return matchesRole && matchesQuery;
+  });
+
   return (
     <div>
       <div className="cb-header-flex">
@@ -717,7 +740,17 @@ export default function AdminOpsDashboard() {
       )}
 
       {/* Operational Stats Grid */}
-      <div className="cb-grid-4" style={{ marginBottom: '32px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '16px', marginBottom: '32px' }}>
+        <div className="cb-card" style={{ padding: '20px', borderLeft: '4px solid #10B981' }}>
+          <div style={{ fontSize: '12px', color: 'var(--cb-text-muted)', textTransform: 'uppercase', marginBottom: '8px' }}>
+            Registered Accounts
+          </div>
+          <div style={{ fontSize: '28px', fontWeight: 800, color: '#10B981' }}>{usersList.length} Accounts</div>
+          <div style={{ fontSize: '12px', color: 'var(--cb-text-secondary)', marginTop: '4px' }}>
+            {usersList.filter(u => u.role === 'CLIENT').length} Clients &bull; {usersList.filter(u => u.role === 'REPRESENTATIVE').length} Reps
+          </div>
+        </div>
+
         <div className="cb-card" style={{ padding: '20px' }}>
           <div style={{ fontSize: '12px', color: 'var(--cb-text-muted)', textTransform: 'uppercase', marginBottom: '8px' }}>
             Pipeline Leads
@@ -1607,6 +1640,146 @@ export default function AdminOpsDashboard() {
             </tbody>
           </table>
         </div>
+      </div>
+
+      {/* Registered Platform Accounts & User Directory Table */}
+      <div className="cb-card" style={{ padding: '24px', marginBottom: '32px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px', flexWrap: 'wrap', gap: '12px' }}>
+          <div>
+            <div className="cb-badge cb-badge-blue" style={{ marginBottom: '6px' }}>
+              <Users size={12} /> Platform Directory & User Registry
+            </div>
+            <h3 style={{ fontSize: '17px', fontWeight: 700, color: 'var(--cb-text-primary)' }}>
+              Registered Platform Accounts & User Directory
+            </h3>
+            <p style={{ fontSize: '12px', color: 'var(--cb-text-secondary)', marginTop: '2px' }}>
+              Real-time synchronization of all client signups, field representatives, and admin operators.
+            </p>
+          </div>
+
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+            <input
+              type="text"
+              placeholder="Search users, emails, phones, companies..."
+              value={userSearchQuery}
+              onChange={(e) => setUserSearchQuery(e.target.value)}
+              className="cb-input"
+              style={{ width: '260px', padding: '6px 12px', fontSize: '12px' }}
+            />
+            <div style={{ display: 'flex', gap: '4px' }}>
+              {['ALL', 'CLIENT', 'REPRESENTATIVE', 'ADMIN'].map((role) => (
+                <button
+                  key={role}
+                  onClick={() => setUserRoleFilter(role)}
+                  className={`cb-btn cb-btn-sm ${userRoleFilter === role ? 'cb-btn-primary' : 'cb-btn-secondary'}`}
+                  style={{ fontSize: '11px', padding: '5px 10px' }}
+                >
+                  {role}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {filteredUsers.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '36px', color: 'var(--cb-text-muted)', fontSize: '13px' }}>
+            No registered users match the selected criteria.
+          </div>
+        ) : (
+          <div className="cb-table-container">
+            <table className="cb-table">
+              <thead>
+                <tr>
+                  <th>User & Contact</th>
+                  <th>Role</th>
+                  <th>Organization / Territory Details</th>
+                  <th>Country</th>
+                  <th>Registered Date</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredUsers.map((u) => {
+                  const fullName = [u.first_name, u.last_name].filter(Boolean).join(' ') || 'Unnamed User';
+                  const roleBadgeClass =
+                    u.role === 'CLIENT'
+                      ? 'cb-badge-blue'
+                      : u.role === 'REPRESENTATIVE'
+                      ? 'cb-badge-emerald'
+                      : u.role === 'SUPER_ADMIN'
+                      ? 'cb-badge-purple'
+                      : 'cb-badge-neutral';
+
+                  return (
+                    <tr key={u.id}>
+                      <td>
+                        <div style={{ fontWeight: 600, color: 'var(--cb-text-primary)' }}>
+                          {fullName}
+                        </div>
+                        <div style={{ fontSize: '12px', color: 'var(--cb-text-muted)' }}>
+                          {u.email}
+                        </div>
+                        {u.phone && (
+                          <div style={{ fontSize: '11px', color: 'var(--cb-text-secondary)', fontFamily: 'monospace' }}>
+                            {u.phone}
+                          </div>
+                        )}
+                      </td>
+                      <td>
+                        <span className={`cb-badge ${roleBadgeClass}`}>
+                          {u.role}
+                        </span>
+                      </td>
+                      <td>
+                        {u.role === 'CLIENT' ? (
+                          <div>
+                            <div style={{ fontWeight: 600, color: 'var(--cb-text-primary)', fontSize: '13px' }}>
+                              {u.company_name || 'Individual Client'}
+                            </div>
+                            <div style={{ fontSize: '11px', color: 'var(--cb-text-muted)' }}>
+                              {u.industry || 'General Software'}
+                            </div>
+                          </div>
+                        ) : u.role === 'REPRESENTATIVE' ? (
+                          <div>
+                            <div style={{ fontFamily: 'monospace', fontWeight: 700, color: '#10B981', fontSize: '13px' }}>
+                              Code: {u.referral_code || 'N/A'}
+                            </div>
+                            <div style={{ fontSize: '11px', color: 'var(--cb-text-muted)' }}>
+                              Territory: {u.territory_id || 'DEFAULT'} &bull; Status: {u.approval_status || 'ACTIVE'}
+                            </div>
+                          </div>
+                        ) : (
+                          <span style={{ fontSize: '12px', color: 'var(--cb-text-secondary)' }}>
+                            Internal Operator
+                          </span>
+                        )}
+                      </td>
+                      <td>
+                        <span className="cb-badge cb-badge-neutral">
+                          {u.country_name || (u.country_id === 'c_ng' ? 'Nigeria' : 'Kenya')} ({u.country_code || (u.country_id === 'c_ng' ? 'NG' : 'KE')})
+                        </span>
+                      </td>
+                      <td>
+                        <div style={{ fontSize: '12px', color: 'var(--cb-text-secondary)' }}>
+                          {u.created_at ? new Date(u.created_at).toLocaleDateString() : 'Recent'}
+                        </div>
+                        <div style={{ fontSize: '10px', color: 'var(--cb-text-muted)' }}>
+                          {u.created_at ? new Date(u.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                        </div>
+                      </td>
+                      <td>
+                        <span className={`cb-badge ${u.status === 'SUSPENDED' ? 'cb-badge-rose' : 'cb-badge-emerald'}`}>
+                          {u.status || 'ACTIVE'}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {/* Territory Attribution & Commission Governance Console */}
