@@ -20,6 +20,8 @@ import {
   CheckSquare,
   ChevronDown,
   User,
+  Menu,
+  X,
 } from 'lucide-react';
 
 export default function DashboardLayout({
@@ -33,6 +35,7 @@ export default function DashboardLayout({
   const [loading, setLoading] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -75,9 +78,10 @@ export default function DashboardLayout({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isDropdownOpen]);
 
-  // Close dropdown on navigation
+  // Close dropdown and mobile drawer on navigation
   useEffect(() => {
     setIsDropdownOpen(false);
+    setMobileSidebarOpen(false);
   }, [pathname]);
 
   const handleLogout = async () => {
@@ -169,10 +173,40 @@ export default function DashboardLayout({
 
   return (
     <div className="cb-dashboard-layout">
+      {/* Mobile Drawer Backdrop */}
+      {mobileSidebarOpen && (
+        <div
+          className="cb-sidebar-backdrop"
+          onClick={() => setMobileSidebarOpen(false)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.6)',
+            backdropFilter: 'blur(4px)',
+            zIndex: 90,
+          }}
+        />
+      )}
+
       {/* Sidebar — Clean: Logo + Nav + Settings */}
-      <aside className="cb-sidebar">
-        <div className="cb-sidebar-header" style={{ padding: '18px 20px' }}>
+      <aside className={`cb-sidebar ${mobileSidebarOpen ? 'mobile-open' : ''}`}>
+        <div className="cb-sidebar-header" style={{ padding: '18px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <CodeBridgeLogo size="md" variant="light-text" href="/" showTagline={true} />
+          <button
+            onClick={() => setMobileSidebarOpen(false)}
+            className="cb-mobile-sidebar-close"
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'var(--cb-text-muted)',
+              cursor: 'pointer',
+              padding: '6px',
+              borderRadius: '6px',
+            }}
+            aria-label="Close menu"
+          >
+            <X size={20} />
+          </button>
         </div>
 
         {/* Navigation Items */}
@@ -184,6 +218,7 @@ export default function DashboardLayout({
               <Link
                 key={idx}
                 href={item.href}
+                onClick={() => setMobileSidebarOpen(false)}
                 className={`cb-nav-link ${isActive ? 'active' : ''}`}
               >
                 <Icon size={18} />
@@ -214,6 +249,7 @@ export default function DashboardLayout({
           {/* Settings & Profile Nav Link */}
           <Link
             href="/dashboard/settings"
+            onClick={() => setMobileSidebarOpen(false)}
             className={`cb-nav-link ${isSettingsActive ? 'active' : ''}`}
           >
             <Settings size={18} />
@@ -227,6 +263,24 @@ export default function DashboardLayout({
         {/* Topbar */}
         <header className="cb-topbar">
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <button
+              onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
+              className="cb-mobile-sidebar-toggle"
+              aria-label="Toggle navigation menu"
+              style={{
+                background: 'none',
+                border: '1px solid var(--cb-border-subtle)',
+                color: 'var(--cb-text-primary)',
+                padding: '7px',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                display: 'none',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Menu size={18} />
+            </button>
             <span style={{
               fontSize: '13px',
               fontWeight: 700,

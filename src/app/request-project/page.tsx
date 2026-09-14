@@ -59,13 +59,8 @@ function RequestProjectContent() {
 
         <section style={{ padding: '60px 0 90px' }}>
           <div className="cb-container" style={{ maxWidth: '1040px' }}>
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-              gap: '36px',
-              alignItems: 'flex-start',
-            }}>
-              <div style={{ gridColumn: 'span 2' }}>
+            <div className="cb-request-grid">
+              <div className="cb-request-form-col">
                 <IntakeForm initialService={initialService} />
               </div>
 
@@ -137,6 +132,20 @@ function RequestProjectContent() {
         </section>
       </main>
       <Footer />
+      <style jsx>{`
+        .cb-request-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 32px;
+          align-items: flex-start;
+        }
+        @media (min-width: 960px) {
+          .cb-request-grid {
+            grid-template-columns: 1.8fr 1fr;
+            gap: 36px;
+          }
+        }
+      `}</style>
     </>
   );
 }
